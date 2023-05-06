@@ -1,11 +1,11 @@
-name: "portfolio"
+name: "Rowan's Data Science Portfolio"
 output_dir: docs
 navbar:
-  title: "Portfolio"
+  title: "Rowan's Data Science Portfolio"
   left:
     - text: "Home"
       href: index.html
-    - text: "About"
+    - text: "About Rowan"
       href: about.html
     - text: "Portfolio 1"
       href: p01.html
