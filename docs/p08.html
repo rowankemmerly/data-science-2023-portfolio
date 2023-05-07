@@ -11,9 +11,9 @@
 
 
 
-<title>Portfolio 8</title>
+<title>Portfolio 8: Measurement Study on Psychological and Behaviroal Variables Associated with Confidence</title>
 
-<script src="site_libs/header-attrs-2.13/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.20/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
@@ -141,11 +141,15 @@ $(document).ready(function () {
     href = "index.html";
   var menuAnchor = $('a[href="' + href + '"]');
 
-  // mark it active
-  menuAnchor.tab('show');
-
-  // if it's got a parent navbar menu mark it active as well
-  menuAnchor.closest('li.dropdown').addClass('active');
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
 
   // Navbar adjustments
   var navHeight = $(".navbar").first().height() + 15;
@@ -174,8 +178,8 @@ $(document).ready(function () {
   border-radius: 4px;
 }
 
-.tabset-dropdown > .nav-tabs > li.active:before {
-  content: "";
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
   font-family: 'Glyphicons Halflings';
   display: inline-block;
   padding: 10px;
@@ -183,16 +187,9 @@ $(document).ready(function () {
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
-  content: "&#xe258;";
-  border: none;
-}
-
-.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
-  content: "";
+  content: "\e258";
   font-family: 'Glyphicons Halflings';
-  display: inline-block;
-  padding: 10px;
-  border-right: 1px solid #ddd;
+  border: none;
 }
 
 .tabset-dropdown > .nav-tabs > li.active {
@@ -241,7 +238,7 @@ $(document).ready(function () {
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="navbar-brand" href="index.html">Portfolio</a>
+      <a class="navbar-brand" href="index.html">Rowan's Data Science Portfolio</a>
     </div>
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
@@ -249,7 +246,7 @@ $(document).ready(function () {
   <a href="index.html">Home</a>
 </li>
 <li>
-  <a href="about.html">About</a>
+  <a href="about.html">About Rowan</a>
 </li>
 <li>
   <a href="p01.html">Portfolio 1</a>
@@ -293,7 +290,8 @@ $(document).ready(function () {
 
 
 
-<h1 class="title toc-ignore">Portfolio 8</h1>
+<h1 class="title toc-ignore">Portfolio 8: Measurement Study on
+Psychological and Behaviroal Variables Associated with Confidence</h1>
 
 </div>
 
@@ -305,6 +303,159 @@ of the goal, the product (computer program, hand graph, computer graph,
 etc.), the data, and some interpretation. Reports must be reproducible
 and of high quality in terms of writing, grammar, presentation, etc.</p>
 </blockquote>
+<div id="introduction" class="section level3">
+<h3>Introduction</h3>
+<p>This project (like portfolio pieces 6 and 7) is from my work on an
+NSF-funded grant on the consequences of confidence with Dr. Eric Stone
+(Wake Forest University) and Dr. Andrew Parker (RAND corporation).
+Dr. Parker recently ran a qualitative study that asked both researchers
+(in the field of judgement and decision making) and laypeople to give
+freelist responses to variations on two questions that all generally
+asked about people’s associations with having high or low confidence, or
+with being over- or underconfident. One question asked about the
+associations people had that were thoughts and/or feelings, and the
+other asked about associated behaviors. We used data on the most
+commonly mentioned associations from this study to construct mini-scales
+(six items each) on three different potential psychological consequences
+of confidence: decisiveness, empowerment, and openness to information.
+We then used these scales in a subsequent study that examined the
+psychological and behavioral consequences of unjustified confidence
+(i.e., confidence controlling for knowledge) in a sports betting domain.
+In that study, we found that the three mini-scales all had relatively
+low Cronbach’s alphas (ranging from .53-.66), so we decided that it
+would be a good idea to collect some new data solely for the purpose of
+constructing more reliable scales of potential psychological
+consequences of confidence. In Spring 2023, as a part of mass testing,
+Wake Forest University undergraduate students in Intro Psychology
+answered a 72-item questionnaire that had the following prompt:</p>
+<blockquote>
+<p>Imagine you are starting a new office job. You will first have to
+undergo training, learning how the job works, office expectations, and
+how to complete various tasks. Your job will include a range of
+responsibilities, including managing multiple tasks in a timely manner,
+working in teams, and making strategic business decisions. As you think
+forward to your job, how much do you anticipate _______?</p>
+</blockquote>
+<p>Over 12 separate pages, participants then responded to the randomized
+72 items (all with the same Likert scale: not at all, slightly,
+moderately, very, extremely), each of which loosely aligned with six
+potential psychological/behavioral consequences of confidence: the
+constructs from before (decisiveness, empowerment, and openness to
+information) and then also three additional constructs (risk taking,
+friendliness/sociability, and assuredness). Each of the six constructs
+had 12 items that loosely went along with it. Here are all of the items
+(not randomized):</p>
+<p><strong>Decisiveness</strong></p>
+<p><em>As you think forward to your job, how much do you anticipate
+_______?</em></p>
+<ol style="list-style-type: decimal">
+<li>being comfortable making decisions</li>
+<li>being decisive</li>
+<li>thinking quickly</li>
+<li>making conclusive decisions</li>
+<li>making decisions without second guessing yourself</li>
+<li>deciding without hesitation</li>
+<li>being hesitant</li>
+<li>being unsure about what decisions to make</li>
+<li>being indecisive</li>
+<li>being tentative in making decisions</li>
+<li>wavering between options when deciding what to do</li>
+<li>not being able to make up your mind</li>
+</ol>
+<p><strong>Openness to Information</strong></p>
+<p><em>As you think forward to your job, how much do you anticipate
+_______?“</em></p>
+<ol style="list-style-type: decimal">
+<li>being open to new information</li>
+<li>being open to all options</li>
+<li>wanting to learn more</li>
+<li>accepting other viewpoints</li>
+<li>desiring additional viewpoints</li>
+<li>being open-minded</li>
+<li>being uninterested in new information</li>
+<li>being stubborn</li>
+<li>being resistant to new information</li>
+<li>not wanting to learn new ways of doing things</li>
+<li>being closed-minded</li>
+<li>not wanting to get feedback</li>
+</ol>
+<p><strong>Empowerment</strong></p>
+<p><em>As you think forward to your job, how much do you anticipate
+_______?“</em></p>
+<ol style="list-style-type: decimal">
+<li>being empowered</li>
+<li>being motivated</li>
+<li>being energized</li>
+<li>being driven</li>
+<li>acting with conviction</li>
+<li>taking initiative</li>
+<li>being unmotivated</li>
+<li>being apprehensive</li>
+<li>being overwhelmed</li>
+<li>lacking conviction</li>
+<li>following other people’s lead</li>
+<li>being apathetic</li>
+</ol>
+<p><strong>Risk taking</strong></p>
+<p><em>As you think forward to your job, how much do you anticipate
+_______?“</em></p>
+<ol style="list-style-type: decimal">
+<li>taking risks</li>
+<li>being risk-seeking</li>
+<li>taking chances</li>
+<li>taking a calculated gamble</li>
+<li>being bold when making decisions</li>
+<li>putting yourself out there</li>
+<li>being risk-averse</li>
+<li>being cautious</li>
+<li>playing it safe</li>
+<li>not taking risks</li>
+<li>making decisions carefully</li>
+<li>avoiding taking risks</li>
+</ol>
+<p><strong>Friendly/sociable</strong></p>
+<p><em>As you think forward to your job, how much do you anticipate
+_______?“</em></p>
+<ol style="list-style-type: decimal">
+<li>being friendly</li>
+<li>being sociable</li>
+<li>being helpful</li>
+<li>being eager to share knowledge</li>
+<li>being outgoing</li>
+<li>being extraverted</li>
+<li>being unfriendly</li>
+<li>being unsociable</li>
+<li>being withdrawn</li>
+<li>being unwilling to make suggestions</li>
+<li>being shy</li>
+<li>being at odds with others</li>
+</ol>
+<p><strong>Assuredness</strong></p>
+<p><em>As you think forward to your job, how much do you anticipate
+_______?“</em></p>
+<ol style="list-style-type: decimal">
+<li>being self-assured</li>
+<li>trusting in your abilities</li>
+<li>being sure of yourself</li>
+<li>believing in yourself</li>
+<li>being free of doubt</li>
+<li>feeling secure</li>
+<li>being full of doubt</li>
+<li>being sensitive to failure</li>
+<li>not believing in yourself</li>
+<li>not trusting in your abilities</li>
+<li>feeling insecure</li>
+<li>not being self-assured</li>
+</ol>
+<p>On a final, separate page we also asked this question (with the same
+Likert scale as before): “Overall, how confident would you be going into
+this job?”</p>
+<p>Although we went in already having thought of certain items as being
+associated with certain constructs, we wanted to take an exploratory
+approach to our data analysis and see what patterns naturally arose from
+the data. Therefore, we decided to do a principal components
+analysis.</p>
+</div>
 
 
 
