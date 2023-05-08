@@ -1,0 +1,169 @@
+---
+title: "Portfolio 6: Thesis Part 6 (Updated Figures)"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE)
+```
+
+This is part 6 of the analyses for my master's thesis project, which was titled "Effects of a Short-Term Volitional Intervention Promoting Moral and Non-Moral Personality Change." Here is the abstract of my thesis for some context:
+
+> People can intentionally change specific personality traits. However, it is unclear whether such interventions are effective at changing moral character traits. The present study (total N = 179), which utilized two active intervention groups for mutual comparisons, examined whether a 5-week goal-setting intervention could lead to trait change for a moral trait, compassion (n = 87), or the Big 5 trait of conscientiousness (n = 92). Participants self-selected into one condition after getting feedback on where they stood on these traits in relation to the population norm and completing a brief reflection task. They set implementation intentions and reflected on their progress every 3 days for the duration of the intervention. State assessments were collected every 3 days in addition to self- and observer-report trait assessments at pre- and post-test, with follow-up self-report assessments 2 weeks post-program. Results from analyses of self-report trait and state assessments indicated that participants in both intervention groups were able to successfully change their personalities in the short term, providing preliminary evidence that implementation intention-based volitional personality change interventions can be useful tools for both moral and non-moral trait change.
+
+After I gave my SWell presentation on 2/15/23 (which was preparation for an SPSP Data Blitz I was to give the following week), I wanted to implement some of the suggestions people made to make my figure(s) easier to read and to better convey the results of my study. This portfolio documents that process!
+
+### Loading Packages and Data
+
+```{r load-packages-data}
+
+library(jtools)
+library(foreign)
+library(tidyverse)
+
+VPCDescriptives = read.spss("VPCdescriptives_2.21.23.sav",
+                      to.data.frame = TRUE,
+                      reencode = TRUE,
+                      use.value.labels = FALSE)
+
+
+VPCDescriptives$intervention <- as.factor(VPCDescriptives$intervention)
+
+VPCDescriptives$intervention_label <- as.factor(VPCDescriptives$intervention_label)
+
+VPCDescriptives$datalevel <- as.factor(VPCDescriptives$datalevel)
+
+
+VPCDescriptives_trait <- filter(VPCDescriptives, datalevel == 1)
+CompDesc_trait <-filter(VPCDescriptives_trait, intervention == 0)
+ConsDesc_trait <-filter(VPCDescriptives_trait, intervention == 1)
+
+VPCDescriptives_state <- filter(VPCDescriptives, datalevel == 2)
+CompDesc_state <-filter(VPCDescriptives_state, intervention == 0)
+ConsDesc_state <-filter(VPCDescriptives_state, intervention == 1)
+
+```
+
+### Plot #1
+
+With this plot, I finally figured out how to adjust the colors in the right way!!
+
+```{r state-and-trait-changes}
+
+TraitStateChanges <- ggplot() + 
+  geom_line(data = VPCDescriptives_trait, aes(x = week, y = cons_changeinSD, color = intervention), color = '#B04326') +
+  geom_line(data = VPCDescriptives_trait, aes(x = week, y = comp_changeinSD, color = intervention), color ='#E0A151') +
+  geom_line(data = VPCDescriptives_state, aes(x = week, y = cons_changeinSD, color = intervention, linetype = datalevel), linetype = "dashed", color = '#B04326') +
+  geom_line(data = VPCDescriptives_state, aes(x = week, y = comp_changeinSD, color = intervention, linetype = datalevel),linetype = "dashed", color = '#E0A151') +
+  labs(color = "Intervention Group", linetype = "Data Level",title = "Changes in trait and state compassion and conscientiousness",
+       x = "Week", y = "Change (in SD's)") +
+     facet_wrap(~ intervention_label)
+
+TraitStateChanges
+
+
+```
+
+I still couldn't figure out how to add a legend in the way I wanted to, though.
+
+### Plot #2
+
+My main task for this next plot was to try to make everything easier to read (especially from a distance). I also needed to figure out how to add two separate legends: one for line type (which distinguished state vs. trait data) and one for color (which distinguished compassion vs. conscientiousness). I also started experimenting with custom figure sizes (and custom font sizes, etc.) to get the overall scale right.
+
+
+```{r trait-and-state-with-labels, fig.height=8, fig.width=12}
+
+
+PlotPart2 <- ggplot()+
+    geom_line(data = VPCDescriptives_trait, aes(x= week, y = comp_changeinSD,color = "Compassion", linetype = "Trait"))+
+    geom_line(data = VPCDescriptives_trait, aes(x= week, y = cons_changeinSD,color="Conscientiousness", linetype = "Trait"))+
+    geom_line(data = VPCDescriptives_state, aes(x= week, y = comp_changeinSD,color = "Compassion", linetype = "State"))+
+    geom_line(data = VPCDescriptives_state, aes(x= week, y = cons_changeinSD,color="Conscientiousness", linetype = "State"))+
+    labs(title = "Changes in state and trait compassion and conscientiousness", subtitle = "by intervention group", colour="Measured Trait",linetype = "Data Level", x="Week",y="Change (in SD's)")+
+  facet_wrap(~ intervention_label) +
+    theme(plot.title = element_text(color = "#2E415A", size = 26, face = "bold"),
+          plot.subtitle = element_text(color = "#2E415A", size = 20),
+          strip.text.x = element_text(color = "#2E415A", size = 20, face = "bold.italic"),
+      legend.title = element_text(color = "#2E415A", size = 18, face = "bold"),
+      legend.text = element_text(color = "#2E415A", size = 16),
+      axis.title = element_text(color = "#2E415A", size = 18),
+      axis.text = element_text(color = "#2E415A", size = 16))+
+    scale_color_manual(values = c("#E0A151","#B04326")) +
+    scale_linetype_manual(values = c("dashed", "solid")) 
+
+
+PlotPart2
+
+```
+
+This was pretty close to what I wanted!
+
+### Plot #3: Final Figure for Presentation
+
+Next, I needed to work on adjusting the line thickness to keep working on making things easier to read. I also figured out that it made more sense to add my title/subtitle in Powerpoint itself so I could have the margins in between the text and the graph that I wanted. (I couldn't figure out how to easily adjust that with ggplot code, and this approach just seemed more straightforward). So for this next plot, I got rid of the title and subtitle. 
+
+```{r trait-and-state-no-labels, fig.height=7, fig.width=14}
+
+PlotPart3 <- ggplot()+
+    geom_line(data = VPCDescriptives_trait, aes(x= week, y = comp_changeinSD,color = "Compassion", linetype = "Trait"), linewidth = 1.5)+
+    geom_line(data = VPCDescriptives_trait, aes(x= week, y = cons_changeinSD,color="Conscientiousness", linetype = "Trait"), linewidth = 1.5)+
+    geom_line(data = VPCDescriptives_state, aes(x= week, y = comp_changeinSD,color = "Compassion", linetype = "State"), linewidth = 1.5)+
+    geom_line(data = VPCDescriptives_state, aes(x= week, y = cons_changeinSD,color="Conscientiousness", linetype = "State"), linewidth = 1.5)+
+  geom_point(data = VPCDescriptives_trait, aes(x= week, y = comp_changeinSD,color = "Compassion"), size = 4, shape = 16)+
+    geom_point(data = VPCDescriptives_trait, aes(x= week, y = cons_changeinSD,color="Conscientiousness"), size = 4, shape = 16)+
+    geom_point(data = VPCDescriptives_state, aes(x= week, y = comp_changeinSD,color = "Compassion"), size = 4, shape = 18)+
+    geom_point(data = VPCDescriptives_state, aes(x= week, y = cons_changeinSD,color="Conscientiousness"), size = 4, shape = 18)+
+    labs(colour="Measured Trait",linetype = "Data Level", x="Week",y="Change (in SD's)")+
+  facet_wrap(~ intervention_label) +
+    theme(plot.title = element_text(color = "#2E415A", size = 26, face = "bold"),
+          plot.subtitle = element_text(color = "#2E415A", size = 20),
+          strip.text.x = element_text(color = "#2E415A", size = 20, face = "bold.italic"), 
+      legend.title = element_text(color = "#2E415A", size = 18, face = "bold"),
+      legend.text = element_text(color = "#2E415A", size = 16),
+      axis.title = element_text(color = "#2E415A", size = 18),
+      axis.text = element_text(color = "#2E415A", size = 18))+
+    scale_color_manual(values = c("#E0A151","#B04326")) +
+    scale_linetype_manual(values = c("dashed", "solid")) 
+
+
+PlotPart3
+
+```
+
+I think this looks a lot better than my original figure and I'm happy with the result!
+
+### Plot #4: Final Figure for Paper (APA Style)
+
+For my thesis (the paper itself), I needed to create an APA-style version of the above figure that would blend in nicely with the formatting of my text. Towards this end, I used an [apa-style ggplot theme from the jtools package (created by Jacob Long)](https://rdrr.io/cran/jtools/man/theme_apa.html).
+
+
+```{r apa-style-plot}
+
+APAPlot <- ggplot()+
+    geom_line(data = VPCDescriptives_trait, aes(x= week, y = comp_changeinSD,color = "Compassion", linetype = "Trait"))+
+    geom_line(data = VPCDescriptives_trait, aes(x= week, y = cons_changeinSD,color="Conscientiousness", linetype = "Trait"))+
+    geom_line(data = VPCDescriptives_state, aes(x= week, y = comp_changeinSD,color = "Compassion", linetype = "State"))+
+    geom_line(data = VPCDescriptives_state, aes(x= week, y = cons_changeinSD,color="Conscientiousness", linetype = "State"))+
+    labs(colour="Measured Trait",linetype = "Data Level", x="Week",y="Change (in SD's)")+
+  facet_wrap(~ intervention_label) +
+ theme_apa(
+  legend.pos = "right",
+  legend.use.title = FALSE,
+  legend.font.size = 12,
+  x.font.size = 12,
+  y.font.size = 12,
+  facet.title.size = 12,
+  remove.y.gridlines = TRUE,
+  remove.x.gridlines = TRUE)+
+    scale_color_manual(values = c("darkgrey","black")) +
+    scale_linetype_manual(values = c("dashed", "solid")) 
+
+APAPlot +
+  theme(text = element_text(family = "Times New Roman"))
+
+
+```
+
+
+
+
+

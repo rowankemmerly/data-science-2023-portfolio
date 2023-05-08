@@ -1,0 +1,371 @@
+---
+title: "Portfolio 4: Thesis Part 4 (Facet-Level Analyses)"
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE)
+```
+
+
+This is part 4 of the analyses for my master's thesis project, which was titled "Effects of a Short-Term Volitional Intervention Promoting Moral and Non-Moral Personality Change." Here is the abstract of my thesis for some context:
+
+> People can intentionally change specific personality traits. However, it is unclear whether such interventions are effective at changing moral character traits. The present study (total N = 179), which utilized two active intervention groups for mutual comparisons, examined whether a 5-week goal-setting intervention could lead to trait change for a moral trait, compassion (n = 87), or the Big 5 trait of conscientiousness (n = 92). Participants self-selected into one condition after getting feedback on where they stood on these traits in relation to the population norm and completing a brief reflection task. They set implementation intentions and reflected on their progress every 3 days for the duration of the intervention. State assessments were collected every 3 days in addition to self- and observer-report trait assessments at pre- and post-test, with follow-up self-report assessments 2 weeks post-program. Results from analyses of self-report trait and state assessments indicated that participants in both intervention groups were able to successfully change their personalities in the short term, providing preliminary evidence that implementation intention-based volitional personality change interventions can be useful tools for both moral and non-moral trait change. 
+
+### Introduction
+
+Both of the 16-item trait measures I used in my study (for both compassion and conscientiousness) were comprised of four facet scales with four items each. For my 8-item state measures, I used adapted versions of two of each of the facet scales from the trait measures. (For the state measures, I changed the sentences to the past tense and asked how participants had thought/felt/behaved over the past three days rather than how much they act that way generally.) In the following analyses, I take a more granular look at patterns of change for each of the facets at the trait level to enable a more direct comparison between the trait and state level change. 
+
+Here are the full trait measures for compassion and conscientiousness:
+
+**Compassion Scale (Pommier et al., 2020)**
+
+*Prompt: Please read each statement carefully before answering. Indicate how often you feel or behave in the stated manner on a scale from 1 (almost never) to 5 (almost always).Please answer according to what really reflects your experience rather than what you think your experience should be.*
+
+**1.	I pay careful attention when other people talk to me about their troubles. (M)**
+
+**2.	If I see someone going through a difficult time, I try to be caring toward that person. (K)**
+
+3.	I am unconcerned with other people’s problems. (I)
+
+4.	I realize everyone feels down sometimes, it is part of being human. (CH)
+
+**5.	I notice when people are upset, even if they don’t say anything. (M)**
+
+**6.	I like to be there for others in times of difficulty. (K)**
+
+7.	I think little about the concerns of others. (I)
+
+8.	I feel it’s important to recognize that all people have weaknesses and no one’s perfect. (CH)
+
+**9.	I listen patiently when people tell me their problems. (M)**
+
+**10.	My heart goes out to people who are unhappy. (K)**
+
+11.	I try to avoid people who are experiencing a lot of pain. (I)
+
+12.	I feel that suffering is just a part of the common human experience. (CH)
+
+**13.	When people tell me about their problems, I try to keep a balanced perspective on the situation. (M)**
+
+**14.	When others feel sadness, I try to comfort them. (K)**
+
+15.	I can’t really connect with people when they’re suffering. (I)
+
+16.	Despite my differences with others, I know that everyone feels pain just like me. (CH)
+
+
+Subscales: M = mindfulness, K = kindness, CH = common humanity, I = indifference 
+
+I used adapted versions of the mindfulness and kindness subscales (in bold) for the state measures.
+
+**Conscientiousness Factor Scale of HEXACO-100 (Lee & Ashton, 2018)**
+
+*Prompt: Please read each statement and decide how much you agree or disagree with that statement, on a scale from 1 (strongly disagree) to 5 (strongly agree). Please answer every statement, even if you are not completely sure of your response.*
+
+**1.	I clean my office or home quite frequently. (O)**
+
+**2.	When working, I often set ambitious goals for myself. (D)**
+
+3.	I often check my work over repeatedly to find any mistakes.(PE)
+
+4.	I make decisions based on the feeling of the moment rather than on careful thought. (PR)
+
+**5.	I plan ahead and organize things, to avoid scrambling at the last minute. (O)**
+
+**6.	I often push myself very hard when trying to achieve a goal. (D)**
+
+7.	When working on something, I don't pay much attention to small details. (PE)
+
+8.	I make a lot of mistakes because I don't think before I act. (PR)
+
+**9.	People often joke with me about the messiness of my room or desk. (O)**
+
+**10.	Often when I set a goal, I end up quitting without having reached it. (D)**
+
+11.	I always try to be accurate in my work, even at the expense of time. (PE)
+
+12.	I don’t allow my impulses to govern my behavior.(PR)
+
+**13.	When working, I sometimes have difficulties due to being disorganized. (O)**
+
+**14.	I do only the minimum amount of work needed to get by. (D)**
+
+15.	People often call me a perfectionist. (PE)
+
+16.	I prefer to do whatever comes to mind, rather than stick to a plan. (PR)
+
+
+Subscales: O = organization, D = diligence, PE = perfectionism, PR = prudence
+
+I used adapted versions of the organization and diligence subscales (in bold) for the state measures.
+
+
+### Loading Packages and Data
+
+```{r load-packages-data, warning=FALSE}
+
+library(foreign)
+
+VPCexploratory = read.spss("VPCexploratoryanalyses_clean_long_4.4.23.sav",
+                      to.data.frame = TRUE,
+                      reencode = TRUE,
+                      use.value.labels = FALSE)
+
+library(nlme)
+library(lme4)
+library(lmerTest)
+library(psych)
+library(multilevel)
+library(tidyverse)
+
+
+VPCtraitexplore <- filter(VPCexploratory, datalevel == 1)
+
+VPCtraitexplore$id <- as.factor(VPCtraitexplore$id)
+VPCtraitexplore$intervention <- as.factor(VPCtraitexplore$intervention)
+
+
+```
+
+### Facet-Level Analyses
+
+Since I had ended up fitting logarithmic models to all of my other trait- and state-level analyses, that's what I used here. Compassion was coded as 0 and Conscientiousness was coded as 1.
+
+#### Compassion
+
+For comparison, the trait level change in compassion just for the compassion group on their own (Hypothesis 2) was **b = 0.05 (95% CI [0.01, 0.09], SE = 0.02, p < .05)**. There was a medium effect for trait compassion for participants working on their compassion **(d = 0.28)**.
+
+The logarithmic slope by group effect for compassion (Hypothesis 4) was **b = -0.05 (95% CI [-0.10, -0.00], SE = 0.02, p < .05)**. The compassion group experienced a small but significant 0.05 unit increase in trait compassion (p < .01).
+
+**Mindfulness**
+
+```{r facet-mindfulness-subscales-group-by-slope-log, message=FALSE, warning=FALSE}
+CompSubInteraction <- lmer(CompMind ~ TraitLogTime*intervention +
+                (1 + TraitLogTime | id), 
+              data = VPCtraitexplore,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(CompSubInteraction)
+confint(CompSubInteraction)
+rand(CompSubInteraction)
+AIC(CompSubInteraction)
+BIC(CompSubInteraction)
+```
+The effect for Mindfulness (b = -0.08) was slightly larger/about the same as trait compassion (b = -0.05).
+
+**Kindness**
+
+```{r facet-kindness-subscales-group-by-slope-log, message=FALSE, warning=FALSE}
+CompSubInteraction <- lmer(CompKind ~ TraitLogTime*intervention +
+                (1 + TraitLogTime | id), 
+              data = VPCtraitexplore,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(CompSubInteraction)
+confint(CompSubInteraction)
+rand(CompSubInteraction)
+AIC(CompSubInteraction)
+BIC(CompSubInteraction)
+```
+
+The effect for Kindness (b = -0.05) was about the same size as trait compassion (b = -0.05), but it was not significant. 
+
+**Common Humanity**
+
+```{r facet-commonhumanity-subscales-group-by-slope-log, message=FALSE, warning=FALSE}
+CompSubInteraction <- lmer(CompComHuman ~ TraitLogTime*intervention +
+                (1 + TraitLogTime | id), 
+              data = VPCtraitexplore,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(CompSubInteraction)
+confint(CompSubInteraction)
+rand(CompSubInteraction)
+AIC(CompSubInteraction)
+BIC(CompSubInteraction)
+```
+
+The effect for Common Humanity (b = -0.06) was about the same size as trait compassion (b = -0.05), but it was not significant. 
+
+**Indifference**
+
+```{r facet-indifference-subscales-group-by-slope-log, message=FALSE, warning=FALSE}
+CompSubInteraction <- lmer(CompIndiff ~ TraitLogTime*intervention +
+                (1 + TraitLogTime | id), 
+              data = VPCtraitexplore,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(CompSubInteraction)
+confint(CompSubInteraction)
+rand(CompSubInteraction)
+AIC(CompSubInteraction)
+BIC(CompSubInteraction)
+```
+
+The effect for Indifference (reverse-scored; b = -0.03) was slightly smaller/about the same as trait compassion (b = -0.05), but it was not significant. 
+
+**Kindness and Mindfulness Subscales (Same Subscales as State-Level Measures)**
+
+```{r trait-compassion-subscales-group-by-slope-log, message=FALSE, warning=FALSE}
+CompSubInteraction <- lmer(CompSubscales ~ TraitLogTime*intervention +
+                (1 + TraitLogTime | id), 
+              data = VPCtraitexplore,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(CompSubInteraction)
+confint(CompSubInteraction)
+rand(CompSubInteraction)
+AIC(CompSubInteraction)
+BIC(CompSubInteraction)
+```
+
+The effect for the Kindness and Mindfulness subscales (b = -0.06) was slightly larger/about the same as trait compassion (b = -0.05).
+
+**Kindness and Mindfulness Subscales with Pretest Conscientiousness Covariate**
+
+```{r trait-compassion-subscales-group-by-slope-log-with-covariate, message=FALSE, warning=FALSE}
+CompSubInteractionCo <- lmer(CompSubscales ~ pretestcons + TraitLogTime*intervention +
+                (1 + TraitLogTime | id), 
+              data = VPCtraitexplore,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(CompSubInteractionCo)
+confint(CompSubInteractionCo)
+rand(CompSubInteractionCo)
+AIC(CompSubInteractionCo)
+BIC(CompSubInteractionCo)
+```
+
+The compassion subscales effect was about the same/slightly larger when including the pretest conscientiousness covariate. 
+
+#### Conscientiousness
+
+For comparison, those in the conscientiousness group had significantly higher levels of trait conscientiousness at posttest compared to pretest and these increases were generally retained at follow-up (Hypothesis 1): **b = 0.13 (95% CI [0.07, 0.18], SE = 0.03, p < .001)**. There was a medium-large effect for trait conscientiousness for participants working on their conscientiousness **(d = 0.52)**. 
+
+The logarithmic slope by group effect for conscientiousness was **b = 0.14 (95% CI [0.07, 0.20], SE = 0.03, p < .001)**. The conscientiousness group experienced a 0.14 unit increase in trait conscientiousness (p < .001).
+
+
+**Organization**
+
+```{r facet-organization-subscales-group-by-slope-log, message=FALSE, warning=FALSE}
+ConsSubInteraction <- lmer(ConsOrg ~ TraitLogTime*intervention +
+                (1 + TraitLogTime | id), 
+              data = VPCtraitexplore,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(ConsSubInteraction)
+confint(ConsSubInteraction)
+rand(ConsSubInteraction)
+AIC(ConsSubInteraction)
+BIC(ConsSubInteraction)
+```
+
+The effect for Organization (b = 0.23) was larger than the overall trait effect for conscientiousness (b = 0.14).
+
+**Diligence**
+
+```{r facet-diligence-subscales-group-by-slope-log, message=FALSE, warning=FALSE}
+ConsSubInteraction <- lmer(ConsDiligence ~ TraitLogTime*intervention +
+                (1 + TraitLogTime | id), 
+              data = VPCtraitexplore,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(ConsSubInteraction)
+confint(ConsSubInteraction)
+rand(ConsSubInteraction)
+AIC(ConsSubInteraction)
+BIC(ConsSubInteraction)
+```
+
+
+The effect for Diligence (b = 0.15) was about the same as the overall trait effect for conscientiousness (b = 0.14).
+
+**Perfectionism**
+
+```{r facet-perfectionism-subscales-group-by-slope-log, message=FALSE, warning=FALSE}
+ConsSubInteraction <- lmer(ConsPerfect ~ TraitLogTime*intervention +
+                (1 + TraitLogTime | id), 
+              data = VPCtraitexplore,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(ConsSubInteraction)
+confint(ConsSubInteraction)
+rand(ConsSubInteraction)
+AIC(ConsSubInteraction)
+BIC(ConsSubInteraction)
+```
+
+The effect for Perfectionism (b = 0.11) was about the same as/slightly smaller than the overall trait effect for conscientiousness (b = 0.14).
+
+**Prudence**
+
+```{r facet-prudence-subscales-group-by-slope-log, message=FALSE, warning=FALSE}
+ConsSubInteraction <- lmer(ConsPrudence ~ TraitLogTime*intervention +
+                (1 + TraitLogTime | id), 
+              data = VPCtraitexplore,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(ConsSubInteraction)
+confint(ConsSubInteraction)
+rand(ConsSubInteraction)
+AIC(ConsSubInteraction)
+BIC(ConsSubInteraction)
+```
+
+There was no significant effect for Prudence. 
+
+
+**Organization and Diligence Subscales (Same Subscales as State-Level Measures)**
+
+```{r trait-conscientiousness-subscales-group-by-slope-log, message=FALSE, warning=FALSE}
+ConsSubInteraction <- lmer(ConsSubscales ~ TraitLogTime*intervention +
+                (1 + TraitLogTime | id), 
+              data = VPCtraitexplore,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(ConsSubInteraction)
+confint(ConsSubInteraction)
+rand(ConsSubInteraction)
+AIC(ConsSubInteraction)
+BIC(ConsSubInteraction)
+```
+
+
+The effect for the Organization and Diligence subscales (b = 0.19) was larger than than the overall trait effect for conscientiousness (b = 0.14).
+
+**Organization and Diligence Subscales with Pretest Conscientiousness Covariate**
+
+```{r trait-conscientiousness-subscales-group-by-slope-log-with-covariate, message=FALSE, warning=FALSE}
+ConsSubInteractionCo <- lmer(ConsSubscales ~ pretestcons + TraitLogTime*intervention +
+                (1 + TraitLogTime | id), 
+              data = VPCtraitexplore,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(ConsSubInteractionCo)
+confint(ConsSubInteractionCo)
+rand(ConsSubInteractionCo)
+AIC(ConsSubInteractionCo)
+BIC(ConsSubInteractionCo)
+```
+
+When adding the pretest conscientiousness covariate, the same thing happened as when this covariate was added to the overall trait conscientiousness model: the effect got smaller but was still signicant. 
+
+
+
+### Conclusion
+
+Like previous similar studies have shown, short-term personality change effects tend to be larger at the facet level than at the trait level (as the facet is a narrower unit of analysis). For this study, however, not all facets increased to the same degree, and some didn't seem to change at all. This gives us some preliminary insight into how compassion and conscientiousness change in the short term: it seems like, at least for participants in this study, that people were able to become more compassionate by actively attempting to be more mindful in their emotional interactions with others, but not necessarily by changing their overall worldview or beliefs (which would be better represented by the Common Humanity and Indifference facets). Participants seemed to become more conscientious by becoming more organized and diligent, but not by becoming more prudent (which makes since in a similar way as what happened with compassion, because prudence is arguably more related one's overall beliefs and way of living than being organized, for instance). Overall, it seems easier for individuals to change aspects of themselves that aren't as related to their core identity, which are perhaps more domain-specific (like being more organized in one's work for school, or more compassionately mindful with one's friends, but not necessarily in every aspect of their lives). 
+

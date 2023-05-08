@@ -1,0 +1,170 @@
+---
+title: "Portfolio 3: Thesis Part 3 (Observer-Level Analyses)"
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE)
+```
+
+
+This is part 3 of the analyses for my master's thesis project, which was titled "Effects of a Short-Term Volitional Intervention Promoting Moral and Non-Moral Personality Change." Here is the abstract of my thesis for some context:
+
+> People can intentionally change specific personality traits. However, it is unclear whether such interventions are effective at changing moral character traits. The present study (total N = 179), which utilized two active intervention groups for mutual comparisons, examined whether a 5-week goal-setting intervention could lead to trait change for a moral trait, compassion (n = 87), or the Big 5 trait of conscientiousness (n = 92). Participants self-selected into one condition after getting feedback on where they stood on these traits in relation to the population norm and completing a brief reflection task. They set implementation intentions and reflected on their progress every 3 days for the duration of the intervention. State assessments were collected every 3 days in addition to self- and observer-report trait assessments at pre- and post-test, with follow-up self-report assessments 2 weeks post-program. Results from analyses of self-report trait and state assessments indicated that participants in both intervention groups were able to successfully change their personalities in the short term, providing preliminary evidence that implementation intention-based volitional personality change interventions can be useful tools for both moral and non-moral trait change. 
+
+
+### Loading Packages and Data
+
+
+```{r load-packages-data}
+
+
+library(foreign)
+
+VPCobserver = read.spss("observer data wide clean 3.23.23.sav",
+                      to.data.frame = TRUE,
+                      reencode = TRUE,
+                      use.value.labels = FALSE)
+
+VPCobserver_wider = read.spss("observer data even wider clean 3.23.23.sav",
+                      to.data.frame = TRUE,
+                      reencode = TRUE,
+                      use.value.labels = FALSE)
+
+
+library(nlme)
+library(lme4)
+library(lmerTest)
+library(psych)
+library(multilevel)
+library(tidyverse)
+library(broom)
+
+VPCobserver$id <- as.factor(VPCobserver$id)
+VPCobserver$intervention <- as.factor(VPCobserver$intervention)
+
+ConsObserver <- filter(VPCobserver, intervention == 1)
+CompObserver <- filter(VPCobserver, intervention == 0)
+
+VPCobserver_wider$id <- as.factor(VPCobserver_wider$id)
+VPCobserver_wider$intervention..00 <- as.factor(VPCobserver_wider$intervention..00)
+
+ConsObserver_wider <- filter(VPCobserver_wider, intervention..00 == 1)
+CompObserver_wider <- filter(VPCobserver_wider, intervention..00 == 0)
+
+
+
+```
+
+----------------
+
+
+### Hypothesis 9
+
+Hypothesis 9: I hypothesized that those in the **conscientiousness** group will have ***higher levels of trait conscientiousness*** at posttest compared to pretest as reported by close others acting as informants. 
+
+Starting with an intercept only model:
+
+```{r trait-conscienctiousness-null}
+ConsObs <- lmer(avg_cons ~  1 +
+                (1 | id), 
+              data = ConsObserver,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(ConsObs)
+confint(ConsObs)
+rand(ConsObs)
+AIC(ConsObs)
+BIC(ConsObs)
+```
+
+Then fitting a linear model (I can't fit a logarithmic model with the observer data because there were only two observer data collection points):
+
+```{r trait-conscienctiousness-linear}
+# ConsObs <- lmer(avg_cons ~  LinearTime +
+#                 (1 + LinearTime | id), 
+#               data = ConsObserver,
+#               REML = FALSE,
+#               na.action = "na.omit")
+# 
+# summary(ConsObs)
+# confint(ConsObs)
+# rand(ConsObs)
+# AIC(ConsObs)
+# BIC(ConsObs)
+```
+
+Attempting to run this code gave me the following error code:
+
+"Error: number of observations (=74) <= number of random effects (=88) for term (1 + LinearTime | id); the random-effects parameters and the residual variance (or scale parameter) are probably unidentifiable"
+
+Here, I realized that I could not run mixed-effects linear models on the observer data because there are more random effects than there are participants (i.e., I didn't have a large enough informant sample size). I decided to run paired t-tests instead. 
+
+```{r observer-t-test-cons-group}
+
+cons_ttest <- t.test(ConsObserver_wider$avg_cons.5.00, ConsObserver_wider$avg_cons..00, paired = TRUE, alternative = "greater")
+tidy(cons_ttest)
+
+```
+
+
+#### Conclusion:
+
+> Hypothesis 9 was not fully supported: observers reported changes in trait conscientiousness in the expected direction for participants in the conscientiousness group, (t(30) = 1.48, d = 0.27), but these results were only marginally significant (p = .08). 
+
+
+### Hypothesis 10 
+
+Hypothesis 10: I hypothesized that those in the **compassion** group will have ***higher levels of trait compassion*** at posttest compared to pretest as reported by close others acting as informants. 
+
+Starting with an intercept only model:
+
+```{r trait-compassion-null}
+CompObs <- lmer(avg_comp ~  1 +
+                (1 | id), 
+              data = CompObserver,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(CompObs)
+confint(CompObs)
+rand(CompObs)
+AIC(CompObs)
+BIC(CompObs)
+```
+
+Then linear:
+
+```{r trait-avg_comp-linear}
+# CompObs <- lmer(avg_comp ~  LinearTime +
+#                 (1 + LinearTime | id), 
+#               data = CompObserver,
+#               REML = FALSE,
+#               na.action = "na.omit")
+# 
+# summary(CompObs)
+# confint(CompObs)
+# rand(CompObs)
+# AIC(CompObs)
+# BIC(CompObs)
+```
+I received this error message:
+
+"Error: number of observations (=59) <= number of random effects (=76) for term (1 + LinearTime | id); the random-effects parameters and the residual variance (or scale parameter) are probably unidentifiable"
+
+
+Again, same problem as before. Below is the relevant paired-samples t-test:
+
+```{r observer-t-test-comp-group}
+
+comp_ttest <- t.test(CompObserver_wider$avg_comp.5.00, CompObserver_wider$avg_comp..00, paired = TRUE, alternative = "greater")
+tidy(comp_ttest)
+
+```
+
+#### Conclusion:
+
+> Hypothesis 10 was not supported: observers reported changes in trait compassion in the expected direction for participants in the compassion group, (t(20) = 0.73, d = 0.16), but these results were not significant (p = .24). 
+
+

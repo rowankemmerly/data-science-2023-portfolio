@@ -1,0 +1,90 @@
+---
+title: "Portfolio 8: Analysis of Study 2-1a: Blackjack (Part 2: Individual Participants)"
+---
+
+### Introduction
+
+This project (like portfolio pieces 7, 9, and 10) is from my work on an NSF-funded grant on the consequences of confidence with Dr. Eric Stone (Wake Forest University) and Dr. Andrew Parker (RAND corporation). This study aimed to investigate the effects of a moderator of interest, level of environmental control, on the relationship between unjustified confidence (i.e., confidence controlling for knowledge) and risk taking behavior within the domain of the game blackjack.
+
+In the previous portfolio, I made figures that depicted general trends of the study on between-subjects, average basis (splitting up results on variables like level of knowledge, level of confidence, and level of control). For this portfolio, I transposed my data from a wide to long format so that I could make some figures that drew from individual participant data points to look at overall trends in a different way. 
+
+### Loading Packages and Data
+
+```{r setup}
+library(foreign)
+library(tidyverse)
+
+blackjack_averageslong = read.spss("blackjack_averages_long_3.14.23.sav",
+                      to.data.frame = TRUE,
+                      reencode = TRUE,
+                      use.value.labels = FALSE)
+
+blackjack_averageslong$control <- as.factor(blackjack_averageslong$control)
+blackjack_averageslong$block <- as.factor(blackjack_averageslong$block)
+blackjack_averageslong$condition <- as.factor(blackjack_averageslong$condition)
+
+blackjack_averageslong_lowcontrol <- filter(blackjack_averageslong, control == 1)
+blackjack_averageslong_highcontrol <- filter(blackjack_averageslong, control == 2)
+
+```
+
+
+### Plot #1
+
+This first plot examines a not-entirely-complete version of our central research question, examining the relationships between confidence and risk taking for both high and low levels of environmental control.
+
+```{r scatterplot, echo=FALSE}
+
+
+scatterplot1 <- ggplot() +
+  geom_point(data = blackjack_averageslong_lowcontrol, aes (x = avg_conf, y = avgbet, color = "low control blocks")) + 
+  geom_point(data = blackjack_averageslong_highcontrol, aes (x = avg_conf, y = avgbet, color = "high control blocks")) + 
+ geom_smooth(data = blackjack_averageslong_lowcontrol, aes (x = avg_conf, y = avgbet, color = "low control blocks")) + 
+  geom_smooth(data = blackjack_averageslong_highcontrol, aes (x = avg_conf, y = avgbet, color = "high control blocks")) + 
+   labs(title = "Average amount bet (risk taking)", subtitle = 'by level of confidence, for high and low control blocks', 
+        x = "percent confidence", y="average $ amount bet", color = 'level of control') +
+    # facet_grid(control ~  .)
+#                 labeller = labeller(order = c("1" = "high control first group",
+# "2" = "low control first group"), level_of_knowledge = c("2" = "high knowledge", "1" = "low knowledge")))  +
+      scale_color_manual(values = c("#8856a7", "#8c96c6"))
+  # scale_x_discrete(breaks=c("1","2"),
+  #       labels=c("1" = "low control blocks", "2" = "high control blocks"))
+
+
+scatterplot1
+
+```
+
+For people whose confidence levels were between around 80% and 90%, levels of risk taking were higher in high control blocks as opposed to low control blocks. Otherwise, there was no significant difference in this relationship across the different levels of control. 
+
+
+### Plot #2
+
+For a more complete answer to our central research question, though, we have to control for level of knowledge (to isolate the consequences of confidence that is unrelated to level of actual knowledge). This plot does this by creating separate graphs for high and low knowledge participants:
+
+```{r scatterplot2}
+
+
+scatterplot2 <- ggplot() +
+  geom_point(data = blackjack_averageslong_lowcontrol, aes (x = avg_conf, y = avgbet, color = "low control blocks")) + 
+  geom_point(data = blackjack_averageslong_highcontrol, aes (x = avg_conf, y = avgbet, color = "high control blocks")) + 
+ geom_smooth(data = blackjack_averageslong_lowcontrol, aes (x = avg_conf, y = avgbet, color = "low control blocks")) + 
+  geom_smooth(data = blackjack_averageslong_highcontrol, aes (x = avg_conf, y = avgbet, color = "high control blocks")) + 
+   labs(title = "Average amount bet (risk taking)", subtitle = 'by level of confidence, controlling for knowledge', 
+        x = "percent confidence", y="average $ amount bet", color = 'level of control') +
+facet_grid(level_of_knowledge ~  .,
+                labeller = labeller(level_of_knowledge = c("2" = "high knowledge", "1" = "low knowledge"))) +
+      scale_color_manual(values = c("#8856a7", "#8c96c6"))
+  # scale_x_discrete(breaks=c("1","2")
+  #       labels=c("1" = "low control blocks", "2" = "high control blocks"))
+
+
+scatterplot2
+
+```
+
+This figure shows that there are no differences at all for the confidence-risk taking relationship between high and low control blocks for participants with low blackjack knowledge, and there's even less of a difference between these relationships for participants with high blackjack knowledge as there was for the previous figure.
+
+In conclusion, our research team decided that our specific study design didn't elicit the results we hoped for, although we believe that a different study design might lead to results that would be closer to what we hypothesized. 
+
+

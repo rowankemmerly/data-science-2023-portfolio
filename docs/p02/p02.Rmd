@@ -1,0 +1,380 @@
+---
+title: "Portfolio 2: Thesis Part 2 (State-Level Analyses)"
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE)
+```
+
+
+This is part 2 of the analyses for my master's thesis project, which was titled "Effects of a Short-Term Volitional Intervention Promoting Moral and Non-Moral Personality Change." Here is the abstract of my thesis for some context:
+
+> People can intentionally change specific personality traits. However, it is unclear whether such interventions are effective at changing moral character traits. The present study (total N = 179), which utilized two active intervention groups for mutual comparisons, examined whether a 5-week goal-setting intervention could lead to trait change for a moral trait, compassion (n = 87), or the Big 5 trait of conscientiousness (n = 92). Participants self-selected into one condition after getting feedback on where they stood on these traits in relation to the population norm and completing a brief reflection task. They set implementation intentions and reflected on their progress every 3 days for the duration of the intervention. State assessments were collected every 3 days in addition to self- and observer-report trait assessments at pre- and post-test, with follow-up self-report assessments 2 weeks post-program. Results from analyses of self-report trait and state assessments indicated that participants in both intervention groups were able to successfully change their personalities in the short term, providing preliminary evidence that implementation intention-based volitional personality change interventions can be useful tools for both moral and non-moral trait change. 
+
+### Loading Packages and Data
+
+```{r load-packages-data}
+
+library(foreign)
+
+VPCcombined = read.spss("VPCcombinedclean_3.26.23 with covariates_copy.sav",
+                      to.data.frame = TRUE,
+                      reencode = TRUE,
+                      use.value.labels = FALSE)
+
+library(nlme)
+library(lme4)
+library(lmerTest)
+library(psych)
+library(multilevel)
+library(tidyverse)
+
+VPCstate <- filter(VPCcombined, datalevel == 2)
+
+VPCstate$id <- as.factor(VPCstate$id)
+VPCstate$intervention <- as.factor(VPCstate$intervention)
+
+ConsState <- filter(VPCstate, intervention == 1)
+CompState <- filter(VPCstate, intervention == 0)
+
+
+```
+
+
+### Hypothesis 5 
+
+Hypothesis 5: I hypothesized that those in the **conscientiousness** group will experience significant ***increases levels in state conscientiousness*** over the duration of the study. 
+
+Starting with an intercept only model:
+
+```{r state-conscienctiousness-null, message=FALSE, warning=FALSE}
+StateConsNull <- lmer(stateconscientiousness ~  1 +
+                (1 | id), 
+              data = ConsState,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(StateConsNull)
+confint(StateConsNull)
+rand(StateConsNull)
+AIC(StateConsNull)
+BIC(StateConsNull)
+```
+
+Then linear:
+
+```{r state-conscientiousness-linear, message=FALSE, warning=FALSE}
+StateConsLin <- lmer(stateconscientiousness ~  StateLinearTime +
+                (1 + StateLinearTime | id), 
+              data = ConsState,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(StateConsLin)
+confint(StateConsLin)
+rand(StateConsLin)
+AIC(StateConsLin)
+BIC(StateConsLin)
+```
+
+Then log:
+
+```{r state-conscientiousness-log, message=FALSE, warning=FALSE}
+StateConsLog <- lmer(stateconscientiousness ~  StateLogTime +
+                (1 + StateLogTime | id), 
+              data = ConsState,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(StateConsLog)
+confint(StateConsLog)
+rand(StateConsLog)
+AIC(StateConsLog)
+BIC(StateConsLog)
+```
+
+Then with pretest conscientiousness covariate:
+
+```{r state-conscienctiousness-log-with-covariate, message=FALSE, warning=FALSE}
+StateConsLogCo <- lmer(stateconscientiousness ~ pretestcons + StateLogTime +
+                (1 + StateLogTime | id), 
+              data = ConsState,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(StateConsLogCo)
+confint(StateConsLogCo)
+rand(StateConsLogCo)
+AIC(StateConsLogCo)
+BIC(StateConsLogCo)
+```
+
+Then examining patterns in state compassion for those working on their conscientiousness:
+
+```{r state-conscienctiousness-log-nontarget-state, message=FALSE, warning=FALSE}
+StateConsNonTarget <- lmer(statecompassion ~  StateLogTime +
+                (1 + StateLogTime | id), 
+              data = ConsState,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(StateConsNonTarget)
+confint(StateConsNonTarget)
+rand(StateConsNonTarget)
+AIC(StateConsNonTarget)
+BIC(StateConsNonTarget)
+```
+
+#### Conclusion:
+
+>Hypothesis 5 was supported: participants in the conscientiousness group experienced significant increases in state conscientiousness over the duration of the study (b = 0.08, 95% CI [0.01, 0.14], SE = 0.03, p < .05). There was a medium-large effect for state conscientiousness for participants working on their conscientiousness (d = 0.61). However, those in the conscientiousness group also increased in state compassion (b = 0.07, 95% CI [0.03, 0.12], SE = 0.02, p < .01) with a medium-sized effect (d = 0.48). 
+
+
+### Hypothesis 6 
+
+Hypothesis 6: I hypothesized that those in the **compassion** group will experience significant ***increases levels in state compassion*** over the duration of the study. 
+
+
+Starting with an intercept only model:
+
+```{r state-compassion-null, message=FALSE, warning=FALSE}
+StateCompNull <- lmer(statecompassion ~ 1 +
+                (1 | id), 
+              data = CompState,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(StateCompNull)
+confint(StateCompNull)
+rand(StateCompNull)
+AIC(StateCompNull)
+BIC(StateCompNull)
+```
+
+Then linear:
+
+```{r state-compassion-linear, message=FALSE, warning=FALSE}
+StateCompLin <- lmer(statecompassion ~  StateLinearTime +
+                (1 + StateLinearTime | id), 
+              data = CompState,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(StateCompLin)
+confint(StateCompLin)
+rand(StateCompLin)
+AIC(StateCompLin)
+BIC(StateCompLin)
+```
+
+Then log: 
+
+```{r state-compassion-log, message=FALSE, warning=FALSE}
+StateCompLog <- lmer(statecompassion ~  StateLogTime +
+                (1 + StateLogTime | id), 
+              data = CompState,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(StateCompLog)
+confint(StateCompLog)
+rand(StateCompLog)
+AIC(StateCompLog)
+BIC(StateCompLog)
+```
+
+(Log had the best fit again.)
+
+
+With the same covariate as before:
+
+```{r state-compassion-log-with-covariate, message=FALSE, warning=FALSE}
+StateCompLogCo <- lmer(statecompassion ~ pretestcons + StateLogTime +
+                (1 + StateLogTime | id), 
+              data = CompState,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(StateCompLogCo)
+confint(StateCompLogCo)
+rand(StateCompLogCo)
+AIC(StateCompLogCo)
+BIC(StateCompLogCo)
+```
+
+Examining patterns in non-target trait at the state level:
+
+```{r state-compassion-log-nontarget-state, message=FALSE, warning=FALSE}
+StateCompNonTarget <- lmer(stateconscientiousness ~  StateLogTime +
+                (1 + StateLogTime | id), 
+              data = CompState,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(StateCompNonTarget)
+confint(StateCompNonTarget)
+rand(StateCompNonTarget)
+AIC(StateCompNonTarget)
+BIC(StateCompNonTarget)
+```
+
+#### Conclusion:
+
+>Hypothesis 6 was also supported: those in the compassion group experienced significant increases in state compassion over the duration of the study (b = 0.16, 95% CI [0.11, 0.20], SE = 0.02, p < .001). There was a large effect for state compassion for compassion group participants (d = 0.70). Those in the compassion group did not experience a significant increase in levels of state conscientiousness (b = 0.02, 95% CI [-0.02, 0.08], SE = 0.03, p = .37). 
+
+
+
+### Hypothesis 7
+
+I examined the intervention groups combined to detect Time x Group interaction effects at the state level.
+
+Hypothesis 7: I hypothesized that **people who chose the conscientiousness intervention** will show ***greater increases in state conscientiousness compared with the compassion group.***
+
+Testing the group by time (slope) interaction:
+
+Null first:
+
+```{r state-conscientiousness-group-by-slope-null, message=FALSE, warning=FALSE}
+ConsInteractionNull <- lmer(stateconscientiousness ~  1 +
+                (1 | id), 
+              data = VPCstate,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(ConsInteractionNull)
+confint(ConsInteractionNull)
+rand(ConsInteractionNull)
+AIC(ConsInteractionNull)
+BIC(ConsInteractionNull)
+```
+
+Then linear:
+
+```{r state-conscientiousness-group-by-slope-linear, message=FALSE, warning=FALSE}
+ConsInteractionLin <- lmer(stateconscientiousness ~  StateLinearTime*intervention +
+                (1 + StateLinearTime | id), 
+              data = VPCstate,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(ConsInteractionLin)
+confint(ConsInteractionLin)
+rand(ConsInteractionLin)
+AIC(ConsInteractionLin)
+BIC(ConsInteractionLin)
+```
+
+
+Then log:
+
+```{r state-conscientiousness-group-by-slope-log, message=FALSE, warning=FALSE}
+ConsInteractionLog <- lmer(stateconscientiousness ~  StateLogTime*intervention +
+                (1 + StateLogTime | id), 
+              data = VPCstate,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(ConsInteractionLog)
+confint(ConsInteractionLog)
+rand(ConsInteractionLog)
+AIC(ConsInteractionLog)
+BIC(ConsInteractionLog)
+```
+
+Then adding pretest conscientiousness covariate:
+
+```{r state-conscientiousness-group-by-slope-log-with-covariate, message=FALSE, warning=FALSE}
+ConsInteractionCo <- lmer(stateconscientiousness ~ pretestcons + StateLogTime*intervention +
+                (1 + StateLogTime | id), 
+              data = VPCstate,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(ConsInteractionCo)
+confint(ConsInteractionCo)
+rand(ConsInteractionCo)
+AIC(ConsInteractionCo)
+BIC(ConsInteractionCo)
+```
+
+#### Conclusion:
+
+>Hypothesis 7 was not fully supported: although participants in the conscientiousness group experienced greater increases in state conscientiousness than the compassion group’s increases in state conscientiousness (b = 0.06, 95% CI [-0.03, 0.14], SE = 0.04), this effect was not significant (p = .09). Although nonsignificant, the conscientiousness group experienced a 0.08 unit change in state conscientiousness in the expected direction, while the compassion group did not experience a significant increase in state conscientiousness (b = 0.02, p = .46).he logarithmic slope by group interactions still held when controlling for pretest levels of trait conscientiousness.
+
+
+### Hypothesis 8
+
+Hypothesis 8: I hypothesized that **people who chose the compassion intervention** will show ***greater increases in state compassion compared with the conscientiousness group.***
+
+Testing the group by time (slope) interaction:
+
+```{r state-compassion-group-by-slope-null, message=FALSE, warning=FALSE}
+CompInteractionNull <- lmer(statecompassion ~  1 +
+                (1 | id), 
+              data = VPCstate,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(CompInteractionNull)
+confint(CompInteractionNull)
+rand(CompInteractionNull)
+AIC(CompInteractionNull)
+BIC(CompInteractionNull)
+```
+
+
+Testing a linear model:
+
+```{r state-compassion-group-by-slope-linear, warnings=FALSE, message=FALSE, warning=FALSE}
+CompInteractionLin <- lmer(statecompassion ~  StateLinearTime*intervention +
+                (1 + StateLinearTime | id), 
+              data = VPCstate,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(CompInteractionLin)
+confint(CompInteractionLin)
+rand(CompInteractionLin)
+AIC(CompInteractionLin)
+BIC(CompInteractionLin)
+```
+
+Testing a logarithmic model:
+
+```{r state-compassion-group-by-slope-log, message=FALSE, warning=FALSE}
+CompInteractionLog <- lmer(statecompassion ~  StateLogTime*intervention +
+                (1 + StateLogTime | id), 
+              data = VPCstate,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(CompInteractionLog)
+confint(CompInteractionLog)
+rand(CompInteractionLog)
+AIC(CompInteractionLog)
+BIC(CompInteractionLog)
+```
+
+Adding the conscientiousness covariate:
+
+```{r state-compassion-group-by-slope-log-with-covariate, message=FALSE, warning=FALSE}
+CompInteractionCo <- lmer(statecompassion ~ pretestcons + StateLogTime*intervention +
+                (1 + StateLogTime | id), 
+              data = VPCstate,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(CompInteractionCo)
+confint(CompInteractionCo)
+rand(CompInteractionCo)
+AIC(CompInteractionCo)
+BIC(CompInteractionCo)
+```
+
+#### Conclusion:
+
+>Hypothesis 8 was supported: the logarithmic slope by group effect for state compassion (b = -0.09, 95% CI [-0.15, -0.02], SE = 0.03, p < .01) was significant. The compassion group experienced a significant 0.15 unit increase in state-level compassion (p < .001), while the conscientiousness group experienced a smaller 0.06 (0.15 – 0.09) unit increase in state compassion (p < .01). The logarithmic slope by group interactions still held when controlling for pretest levels of trait conscientiousness.
+
+
+

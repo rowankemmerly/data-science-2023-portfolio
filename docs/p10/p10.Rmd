@@ -1,0 +1,236 @@
+---
+title: "Portfolio 10: Measurement Study on Psychological and Behaviroal Variables Associated with Confidence (Part 2)"
+---
+
+
+### Introduction
+
+This project (like portfolio pieces 7-9) is from my work on an NSF-funded grant on the consequences of confidence with Dr. Eric Stone (Wake Forest University) and Dr. Andrew Parker (RAND corporation). Dr. Parker recently ran a qualitative study that asked both researchers (in the field of judgement and decision making) and laypeople to give freelist responses to variations on two questions that all generally asked about people's associations with having high or low confidence, or with being over- or underconfident. One question asked about the associations people had that were thoughts and/or feelings, and the other asked about associated behaviors. We used data on the most commonly mentioned associations from this study to construct mini-scales (six items each) on three different potential psychological consequences of confidence: decisiveness, empowerment, and openness to information. We then used these scales in a subsequent study that examined the psychological and behavioral consequences of unjustified confidence (i.e., confidence controlling for knowledge) in a sports betting domain. In that study, we found that the three mini-scales all had relatively low Cronbach's alphas (ranging from .53-.66), so we decided that it would be a good idea to collect some new data solely for the purpose of constructing more reliable scales of potential psychological consequences of confidence. In Spring 2023, as a part of mass testing, Wake Forest University undergraduate students in Intro Psychology answered a 72-item questionnaire that had the following prompt:
+
+> Imagine you are starting a new office job.  You will first have to undergo training, learning how the job works, office expectations, and how to complete various tasks.  Your job will include a range of responsibilities, including managing multiple tasks in a timely manner, working in teams, and making strategic business decisions.  As you think forward to your job, how much do you anticipate _______?
+
+Over 12 separate pages, participants then responded to the randomized 72 items (all with the same Likert scale: not at all, slightly, moderately, very, extremely), each of which loosely aligned with six potential psychological/behavioral consequences of confidence: the constructs from before (decisiveness, empowerment, and openness to information) and then also three additional constructs (risk taking, friendliness/sociability, and assuredness). Each of the six constructs had 12 items that loosely went along with it. 
+
+In the previous portfolio, I conducted some principal components analyses and exploratory factor analyses with these data. Now, in this portfolio, I will attempt to create visualziations that represent the results of these anaylses. 
+
+### Loading Packages and Data 
+
+```{r loading-packages-and-data}
+
+library(foreign)
+library(tidyverse)
+library(tidyr)
+library(psych)
+library(broom)
+library(ggfortify)
+library(reshape2)
+library(janitor)
+
+measurementstudy = read.spss("Measurement study mass testing S23_withlabels.sav",
+                      to.data.frame = TRUE,
+                      reencode = TRUE,
+                      use.value.labels = FALSE)
+
+```
+
+
+### Plotting 3 Factors
+
+```{r plotting-factor-loadings-3}
+
+
+conf_consequences_items <- select(measurementstudy, accepting_other_viewpoints:following_other_peoples_lead_r)
+
+conf_consequences_items[sapply(conf_consequences_items, is.infinite)] <- NA
+
+conf_consequences_items <-   drop_na(conf_consequences_items)
+
+consequences_factor.none_3 <- factanal(conf_consequences_items, factors = 3, na.action = "pairwise.complete.obs", rotation = "none", method = "correlation", scores = "regression")
+
+consequences_factor.varimax_3 <- factanal(conf_consequences_items, factors = 3, na.action = "pairwise.complete.obs", rotation = "varimax", method = "correlation", scores = "regression")
+
+consequences_factor.promax_3 <- factanal(conf_consequences_items, factors = 3, na.action = "pairwise.complete.obs", rotation = "promax", method = "correlation", scores = "regression")
+
+consequences_factor.none_loadings <- consequences_factor.none_3$loadings
+consequences_factor.varimax_loadings <- consequences_factor.varimax_3$loadings
+consequences_factor.promax_loadings <- consequences_factor.promax_3$loadings
+
+
+# Creating dataframes for plotting
+plot_consqfact <- data.frame(item = row.names(consequences_factor.varimax_loadings),
+                      loading = consequences_factor.varimax_loadings[,1],
+                      factor = "Factor 1") # Change group and loadings indices for other factors
+plot_consqfact <- rbind(plot_consqfact, data.frame(item = row.names(consequences_factor.varimax_loadings),
+                                     loading = consequences_factor.varimax_loadings[,2],
+                                     factor = "Factor 2"))
+plot_consqfact <- rbind(plot_consqfact, data.frame(item = row.names(consequences_factor.varimax_loadings),
+                                     loading = consequences_factor.varimax_loadings[,3],
+                                     factor = "Factor 3"))
+
+
+
+ggplot(plot_consqfact, aes(y = abs(loading), x = item, fill = factor)) +
+  geom_col(stat = "identity") +
+  scale_fill_discrete(name = "Factor") +
+  coord_flip() +
+  ylab("Absolute Loading") +
+  xlab("Item")
+
+
+```
+
+
+### Plotting 5 Factors
+
+```{r plotting-factor-loadings-5}
+
+consequences_factor.none_5 <- factanal(conf_consequences_items, factors = 5, na.action = "pairwise.complete.obs", rotation = "none", method = "correlation", scores = "regression")
+
+consequences_factor.varimax_5 <- factanal(conf_consequences_items, factors = 5, na.action = "pairwise.complete.obs", rotation = "varimax", method = "correlation", scores = "regression")
+
+consequences_factor.promax_5 <- factanal(conf_consequences_items, factors = 5, na.action = "pairwise.complete.obs", rotation = "promax", method = "correlation", scores = "regression")
+
+
+
+consequences_factor.none_loadings <- consequences_factor.none_5$loadings
+consequences_factor.varimax_loadings <- consequences_factor.varimax_5$loadings
+consequences_factor.promax_loadings <- consequences_factor.promax_5$loadings
+
+
+# Creating dataframes for plotting
+plot_consqfact <- data.frame(item = row.names(consequences_factor.varimax_loadings),
+                      loading = consequences_factor.varimax_loadings[,1],
+                      factor = "Factor 1") # Change group and loadings indices for other factors
+plot_consqfact <- rbind(plot_consqfact, data.frame(item = row.names(consequences_factor.varimax_loadings),
+                                     loading = consequences_factor.varimax_loadings[,2],
+                                     factor = "Factor 2"))
+plot_consqfact <- rbind(plot_consqfact, data.frame(item = row.names(consequences_factor.varimax_loadings),
+                                     loading = consequences_factor.varimax_loadings[,3],
+                                     factor = "Factor 3"))
+plot_consqfact <- rbind(plot_consqfact, data.frame(item = row.names(consequences_factor.varimax_loadings),
+                                     loading = consequences_factor.varimax_loadings[,4],
+                                     factor = "Factor 4"))
+plot_consqfact <- rbind(plot_consqfact, data.frame(item = row.names(consequences_factor.varimax_loadings),
+                                     loading = consequences_factor.varimax_loadings[,5],
+                                     factor = "Factor 5"))
+
+
+
+ggplot(plot_consqfact, aes(y = abs(loading), x = item, fill = factor)) +
+  geom_col(stat = "identity") +
+  scale_fill_discrete(name = "Factor") +
+  coord_flip() +
+  ylab("Absolute Loading") +
+  xlab("Item")
+
+
+```
+
+
+### Assigning Items to Factors
+
+It's definitely easier to make sense of the factor loadings with a visualization rather than just looking at a table, but with this many variables, it's still hard to get a good grasp of what the data are telling this. I'm going to transpose the data from long to wide format, and create a new variable that selects the highest absolute value loading for each item. 
+
+```{r assigning-factors}
+
+# # Convert from long to wide format
+# plot_consqfact_wide <- plot_consqfact %>%
+#   pivot_wider(names_from = factor, values_from = loading, names_prefix = "loading_") %>%
+#   clean_names()
+
+# Create a new variable "assigned_factor"
+# plot_consqfact_wide <- plot_consqfact_wide %>%
+#   mutate(assigned_factor = pmax(abs(loading_factor_1), abs(loading_factor_2), abs(loading_factor_3), abs(loading_factor_4), abs(loading_factor_5)))
+
+
+# plot_consqfact_wide <- plot_consqfact_wide %>%
+# mutate(assigned_factor = ifelse(abs(loading_factor_1) == max(abs(loading_factor_1:loading_factor_5)), "F1",
+#                                   ifelse(abs(loading_factor_2) == max(abs(loading_factor_1:loading_factor_5)), "F2",
+#                                          ifelse(abs(loading_factor_3) == max(abs(loading_factor_1:loading_factor_5)), "F3",
+#                                                 ifelse(abs(loading_factor_4) == max(abs(loading_factor_1:loading_factor_5)), "F4", "F5")))))
+# 
+# plot_consqfact_wide <- plot_consqfact_wide %>%
+#   mutate(assigned_factor = case_when(
+#     abs(loading_factor_1) == max(abs(loading_factor_1:loading_factor_5)) ~ "F1",
+#     abs(loading_factor_2) == max(abs(loading_factor_1:loading_factor_5)) ~ "F2",
+#     abs(loading_factor_3) == max(abs(loading_factor_1:loading_factor_5)) ~ "F3",
+#     abs(loading_factor_4) == max(abs(loading_factor_1:loading_factor_5)) ~ "F4",
+#     TRUE ~ "F5"
+#   ))
+# 
+
+
+
+# 
+# plot_consqfact_grouped <- plot_consqfact %>%
+#   group_by(factor) %>%
+#   # Filter to keep only items with the highest absolute loading value
+#   filter(abs(loading) == max(abs(loading))) %>%
+#   # Ungroup the data
+#   ungroup()
+
+
+
+# plot_consqfact %>%
+#   arrange(item, desc(abs(loading)))
+
+# plot_consqfact_assigned <- plot_consqfact %>%
+#   distinct(item, .keep_all = TRUE)
+
+# ggplot(plot_consqfact, aes(y = abs(loading), x = item, fill = factor)) +
+#   geom_col(stat = "identity") +
+#   scale_fill_discrete(name = "Factor") +
+#   coord_flip() +
+#   ylab("Absolute Loading") +
+#   xlab("Item")
+
+plot_consqfact <- plot_consqfact %>%
+  mutate(abs_loading = abs(loading))
+
+plot_consqfact_assigned <- plot_consqfact %>%
+  group_by(item) %>%
+  top_n(1, abs_loading)
+
+plot_consqfact_assigned <- plot_consqfact_assigned %>%
+  arrange(factor, desc(abs_loading))
+
+
+plot_consqfact_assigned
+
+# ggplot(plot_consqfact_assigned, aes(y = abs_loading, x = item, fill = factor)) +
+#   geom_col() +
+#   scale_fill_discrete(name = "Factor") +
+#   coord_flip() +
+#   ylab("Absolute Loading") +
+#   xlab("Item")
+
+# ggplot(plot_consqfact_assigned, aes(y = abs(loading), x = reorder(item, factor, FUN = function(x) {
+#   # Define the order of factors
+#   factor_order <- c("Factor 1", "Factor 2", "Factor 3", "Factor 4", "Factor 5")
+#   # Return the corresponding order for each factor in the plot data
+#   factor_order[match(x, unique(factor_order))]
+# })), fill = factor) +
+#   geom_col() +
+#   scale_fill_discrete(name = "Factor") +
+#   coord_flip() +
+#   ylab("Absolute Loading") +
+#   xlab("Item")
+# 
+
+
+```
+
+Well, I have been trying to figure out an efficient way to reorder the items on my x axis in descending loading order by factor, but I just can't figure it out yet. So above is the dataset arranged in the way I would have liked it to be graphed! Here is how I would interpret the factors at first glance:
+
+1. Empowerment/assuredness
+
+2. Openness to information (open-minded)
+
+3. Closed-minded
+
+4. Friendliness/sociability (extraversion?)
+
+5. Risk taking
+
+It's interesting that being open to new information and being closed to new information seem to have mostly loaded onto different factors. 
+

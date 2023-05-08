@@ -1,0 +1,218 @@
+---
+title: "Portfolio 9: Measurement Study on Psychological and Behaviroal Variables Associated with Confidence (Part 1)"
+---
+
+
+### Introduction
+
+This project (like portfolio pieces 7, 8, and 10) is from my work on an NSF-funded grant on the consequences of confidence with Dr. Eric Stone (Wake Forest University) and Dr. Andrew Parker (RAND corporation). Dr. Parker recently ran a qualitative study that asked both researchers (in the field of judgement and decision making) and laypeople to give freelist responses to variations on two questions that all generally asked about people's associations with having high or low confidence, or with being over- or underconfident. One question asked about the associations people had that were thoughts and/or feelings, and the other asked about associated behaviors. We used data on the most commonly mentioned associations from this study to construct mini-scales (six items each) on three different potential psychological consequences of confidence: decisiveness, empowerment, and openness to information. We then used these scales in a subsequent study that examined the psychological and behavioral consequences of unjustified confidence (i.e., confidence controlling for knowledge) in a sports betting domain. In that study, we found that the three mini-scales all had relatively low Cronbach's alphas (ranging from .53-.66), so we decided that it would be a good idea to collect some new data solely for the purpose of constructing more reliable scales of potential psychological consequences of confidence. In Spring 2023, as a part of mass testing, Wake Forest University undergraduate students in Intro Psychology answered a 72-item questionnaire that had the following prompt:
+
+> Imagine you are starting a new office job.  You will first have to undergo training, learning how the job works, office expectations, and how to complete various tasks.  Your job will include a range of responsibilities, including managing multiple tasks in a timely manner, working in teams, and making strategic business decisions.  As you think forward to your job, how much do you anticipate _______?
+
+Over 12 separate pages, participants then responded to the randomized 72 items (all with the same Likert scale: not at all, slightly, moderately, very, extremely), each of which loosely aligned with six potential psychological/behavioral consequences of confidence: the constructs from before (decisiveness, empowerment, and openness to information) and then also three additional constructs (risk taking, friendliness/sociability, and assuredness). Each of the six constructs had 12 items that loosely went along with it. Here are all of the items (not randomized):
+
+**Decisiveness**
+
+*As you think forward to your job, how much do you anticipate _______?*
+
+1. being comfortable making decisions
+2. being decisive
+3. thinking quickly
+4. making conclusive decisions
+5. making decisions without second guessing yourself
+6. deciding without hesitation
+7. being hesitant
+8. being unsure about what decisions to make
+9. being indecisive
+10. being tentative in making decisions
+11. wavering between options when deciding what to do
+12. not being able to make up your mind
+
+
+**Openness to Information**
+
+*As you think forward to your job, how much do you anticipate _______?"*
+
+1. being open to new information
+2. being open to all options
+3. wanting to learn more
+4. accepting other viewpoints
+5. desiring additional viewpoints 
+6. being open-minded
+7. being uninterested in new information
+8. being stubborn
+9. being resistant to new information
+10. not wanting to learn new ways of doing things
+11. being closed-minded
+12. not wanting to get feedback
+
+
+**Empowerment**
+
+*As you think forward to your job, how much do you anticipate _______?"*
+
+1. being empowered
+2. being motivated 
+3. being energized
+4. being driven
+5. acting with conviction
+6. taking initiative
+7. being unmotivated
+8. being apprehensive
+9. being overwhelmed
+10. lacking conviction
+11. following other people’s lead
+12. being apathetic
+
+
+**Risk taking**
+
+*As you think forward to your job, how much do you anticipate _______?"*
+
+1. taking risks
+2. being risk-seeking
+3. taking chances
+4. taking a calculated gamble
+5. being bold when making decisions
+6. putting yourself out there
+7. being risk-averse
+8. being cautious
+9. playing it safe
+10. not taking risks
+11. making decisions carefully 
+12. avoiding taking risks
+
+
+**Friendly/sociable**
+
+*As you think forward to your job, how much do you anticipate _______?"*
+
+1. being friendly
+2. being sociable
+3. being helpful
+4. being eager to share knowledge
+5. being outgoing
+6. being extraverted
+7. being unfriendly
+8. being unsociable
+9. being withdrawn
+10. being unwilling to make suggestions
+11. being shy
+12. being at odds with others
+
+
+**Assuredness**
+
+*As you think forward to your job, how much do you anticipate _______?"*
+
+1. being self-assured
+2. trusting in your abilities
+3. being sure of yourself
+4. believing in yourself
+5. being free of doubt
+6. feeling secure
+7. being full of doubt
+8. being sensitive to failure
+9. not believing in yourself
+10. not trusting in your abilities
+11. feeling insecure
+12. not being self-assured
+
+On a final, separate page we also asked this question (with the same Likert scale as before): "Overall, how confident would you be going into this job?"
+
+
+
+Although we went in already having thought of certain items as being associated with certain constructs, we wanted to take an exploratory approach to our data analysis and see what patterns naturally arose from the data. Therefore, we decided to do a principal components analysis. 
+
+### Data Analysis 
+
+I first prepped the data set by reverse-scoring the negatively-valenced items (this was done in SPSS, which Dr. Stone prefers). 
+
+#### Loading Packages and Data 
+
+```{r loading-packages-and-data}
+
+library(foreign)
+library(tidyverse)
+library(tidyr)
+library(psych)
+library(broom)
+library(ggfortify)
+library(reshape2)
+library(janitor)
+
+measurementstudy = read.spss("Measurement study mass testing S23_withlabels.sav",
+                      to.data.frame = TRUE,
+                      reencode = TRUE,
+                      use.value.labels = FALSE)
+
+```
+
+#### Defining Variables
+
+```{r defining-variables}
+
+
+
+conf_consequences_items <- select(measurementstudy, accepting_other_viewpoints:following_other_peoples_lead_r)
+
+conf_consequences_items[sapply(conf_consequences_items, is.infinite)] <- NA
+
+conf_consequences_items <-   drop_na(conf_consequences_items)
+ 
+```
+
+#### Factor Analysis 
+
+First doing a Principal Components Analysis to get a general idea of how many factors there may be. 
+
+```{r initial-pca}
+
+require(graphics)
+
+consequences_pca <- prcomp(conf_consequences_items)
+
+plot(prcomp(conf_consequences_items))
+summary(prcomp(conf_consequences_items))
+
+
+```
+
+Looking at the scree plot, it seems like extracting 3 or 5 factors would be appropriate. I'm going to start by extracting 3. Next I'm going to fit three factor models to the data to see which is the cleanest solution:
+
+```{r factor-analysis-3}
+
+consequences_factor.none_3 <- factanal(conf_consequences_items, factors = 3, na.action = "pairwise.complete.obs", rotation = "none", method = "correlation", scores = "regression")
+
+consequences_factor.varimax_3 <- factanal(conf_consequences_items, factors = 3, na.action = "pairwise.complete.obs", rotation = "varimax", method = "correlation", scores = "regression")
+
+consequences_factor.promax_3 <- factanal(conf_consequences_items, factors = 3, na.action = "pairwise.complete.obs", rotation = "promax", method = "correlation", scores = "regression")
+
+consequences_factor.none_3
+consequences_factor.varimax_3
+consequences_factor.promax_3
+
+
+```
+
+Before trying to assign items to factors, I'm going to try this all again with a 5 factor extraction and compare. 
+
+```{r factor-analysis-5}
+
+consequences_factor.none_5 <- factanal(conf_consequences_items, factors = 5, na.action = "pairwise.complete.obs", rotation = "none", method = "correlation", scores = "regression")
+
+consequences_factor.varimax_5 <- factanal(conf_consequences_items, factors = 5, na.action = "pairwise.complete.obs", rotation = "varimax", method = "correlation", scores = "regression")
+
+consequences_factor.promax_5 <- factanal(conf_consequences_items, factors = 5, na.action = "pairwise.complete.obs", rotation = "promax", method = "correlation", scores = "regression")
+
+consequences_factor.none_5
+consequences_factor.varimax_5
+consequences_factor.promax_5
+
+
+```
+
+
+This is a mess to look at!  In the next portfolio, I'm going to try to figure out a way to plot this to better visualize how the items are loading. From what I can tell for now though, it seems like 5 factors might give us more distinct dimensions. I will continue to compare the two extractions in my visualizations. 
+
+

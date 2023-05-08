@@ -1,0 +1,193 @@
+---
+title: 'Portfolio 11: Thesis Part 7 (More Figures)'
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+This is part 7 of the analyses for my master's thesis project, which was titled "Effects of a Short-Term Volitional Intervention Promoting Moral and Non-Moral Personality Change." Here is the abstract of my thesis for some context:
+
+> People can intentionally change specific personality traits. However, it is unclear whether such interventions are effective at changing moral character traits. The present study (total N = 179), which utilized two active intervention groups for mutual comparisons, examined whether a 5-week goal-setting intervention could lead to trait change for a moral trait, compassion (n = 87), or the Big 5 trait of conscientiousness (n = 92). Participants self-selected into one condition after getting feedback on where they stood on these traits in relation to the population norm and completing a brief reflection task. They set implementation intentions and reflected on their progress every 3 days for the duration of the intervention. State assessments were collected every 3 days in addition to self- and observer-report trait assessments at pre- and post-test, with follow-up self-report assessments 2 weeks post-program. Results from analyses of self-report trait and state assessments indicated that participants in both intervention groups were able to successfully change their personalities in the short term, providing preliminary evidence that implementation intention-based volitional personality change interventions can be useful tools for both moral and non-moral trait change.
+
+
+In portfolios 5 and 6, I went through the process of constructing the main figure to represent my thesis project results in my thesis itself and for various presentations. In this portfolio, I will be documenting my process of attempting to create a more complex figure that conveys the multilevel nature of my data. 
+
+
+### Loading Packages and Data
+
+```{r load-packages-data}
+
+library(foreign)
+
+VPCcombined = read.spss("VPCcombinedclean_3.26.23 with covariates_copy.sav",
+                      to.data.frame = TRUE,
+                      reencode = TRUE,
+                      use.value.labels = FALSE)
+
+library(nlme)
+library(lme4)
+library(lmerTest)
+library(psych)
+library(multilevel)
+library(tidyverse)
+
+VPCtrait <- filter(VPCcombined, datalevel == 1)
+
+VPCtrait$id <- as.factor(VPCtrait$id)
+VPCtrait$intervention <- as.factor(VPCtrait$intervention)
+
+ConsTrait <- filter(VPCtrait, intervention == 1)
+CompTrait <- filter(VPCtrait, intervention == 0)
+
+VPCstate <- filter(VPCcombined, datalevel == 2)
+
+VPCstate$id <- as.factor(VPCstate$id)
+VPCstate$intervention <- as.factor(VPCstate$intervention)
+
+ConsState <- filter(VPCstate, intervention == 1)
+CompState <- filter(VPCstate, intervention == 0)
+
+
+
+
+```
+
+### Changes in Trait-Level Conscientiousness
+
+Here I'm realizing that you don't have to plot with different datasets to be able to change your legend text!! What a surprise :)
+
+```{r plot-1}
+
+ggplot(VPCtrait, aes(x = TraitLinearTime, y = traitconscientiousness, group = id, color = intervention)) +
+  geom_line() +
+  labs(title = "Changes in trait-level conscientiousness", subtitle = "by intervention group", x = "Week", y = "Trait Conscientiousness (1-5)", color = "Intervention group") +
+   theme(plot.title = element_text(color = "#2E415A", size = 18, face = "bold"),
+          plot.subtitle = element_text(color = "#2E415A", size = 16),
+          strip.text.x = element_text(color = "#2E415A", size = 16, face = "bold.italic"),
+      legend.title = element_text(color = "#2E415A", size = 12, face = "bold"),
+      legend.text = element_text(color = "#2E415A", size = 10),
+      axis.title = element_text(color = "#2E415A", size = 14),
+      axis.text = element_text(color = "#2E415A", size = 12))+
+    scale_color_manual(values = c("#E0A151","#B04326"),
+                       labels = c("Working on compassion", "Working on conscientiousness"))
+
+
+
+```
+
+### Changes in Trait-Level Compassion
+
+Here I'm realizing that you don't have to plot with different datasets to be able to change your legend text!! What a surprise :)
+
+```{r plot-2}
+
+ggplot(VPCtrait, aes(x = TraitLinearTime, y = traitcompassion, group = id, color = intervention)) +
+  geom_line() +
+  labs(title = "Changes in trait-level compassion", subtitle = "by intervention group", x = "Week", y = "Trait Compassion (1-5)", color = "Intervention group") +
+   theme(plot.title = element_text(color = "#2E415A", size = 18, face = "bold"),
+          plot.subtitle = element_text(color = "#2E415A", size = 16),
+          strip.text.x = element_text(color = "#2E415A", size = 16, face = "bold.italic"),
+      legend.title = element_text(color = "#2E415A", size = 12, face = "bold"),
+      legend.text = element_text(color = "#2E415A", size = 10),
+      axis.title = element_text(color = "#2E415A", size = 14),
+      axis.text = element_text(color = "#2E415A", size = 12))+
+    scale_color_manual(values = c("#E0A151","#B04326"),
+                       labels = c("Working on compassion", "Working on conscientiousness"))
+
+
+
+```
+
+Also going to try this plot without the conscientiousness folks to more easily see the patterns, hopefully:
+
+```{r plot-3}
+
+ggplot(CompTrait, aes(x = TraitLinearTime, y = traitcompassion, group = id, color = intervention)) +
+  geom_line() +
+  labs(title = "Changes in trait-level compassion", x = "Week", y = "Trait Compassion (1-5)", color = "Intervention group") +
+   theme(plot.title = element_text(color = "#2E415A", size = 18, face = "bold"),
+          plot.subtitle = element_text(color = "#2E415A", size = 16),
+          strip.text.x = element_text(color = "#2E415A", size = 16, face = "bold.italic"),
+      legend.title = element_text(color = "#2E415A", size = 12, face = "bold"),
+      legend.text = element_text(color = "#2E415A", size = 10),
+      axis.title = element_text(color = "#2E415A", size = 14),
+      axis.text = element_text(color = "#2E415A", size = 12))+
+    scale_color_manual(values = c("#E0A151","#B04326"),
+                       labels = c("Working on compassion", "Working on conscientiousness"))
+
+
+
+```
+
+
+### Changes in State-Level Conscientiousness
+
+Also now realizing that it can be easier to filter datasets in the midst of making a plot instead of feeling like you have to do everything up front!
+
+```{r plot-4}
+
+ggplot(filter(VPCstate, !is.na(intervention)), aes(x = StateLinearTime, y = stateconscientiousness, group = id, color = intervention)) +
+  geom_line() +
+  labs(title = "Changes in state-level conscientiousness", subtitle = "by intervention group", x = "Week", y = "State Conscientiousness (1-5)", color = "Intervention group") +
+   theme(plot.title = element_text(color = "#2E415A", size = 18, face = "bold"),
+          plot.subtitle = element_text(color = "#2E415A", size = 16),
+          strip.text.x = element_text(color = "#2E415A", size = 16, face = "bold.italic"),
+      legend.title = element_text(color = "#2E415A", size = 12, face = "bold"),
+      legend.text = element_text(color = "#2E415A", size = 10),
+      axis.title = element_text(color = "#2E415A", size = 14),
+      axis.text = element_text(color = "#2E415A", size = 12))+
+    scale_color_manual(values = c("#E0A151","#B04326"),
+                       labels = c("Working on compassion", "Working on conscientiousness"))
+
+
+
+```
+
+Oh my. This is great proof of the importance of having many different state assessments over the course of at least 5 weeks!! So much fluctuation!
+
+### Changes in State-Level Compassion
+
+
+```{r plot-5}
+
+ggplot(filter(VPCstate, !is.na(intervention)), aes(x = StateLinearTime, y = statecompassion, group = id, color = intervention)) +
+  geom_line() +
+  labs(title = "Changes in state-level compassion", subtitle = "by intervention group", x = "Week", y = "State Compassion (1-5)", color = "Intervention group") +
+   theme(plot.title = element_text(color = "#2E415A", size = 18, face = "bold"),
+          plot.subtitle = element_text(color = "#2E415A", size = 16),
+          strip.text.x = element_text(color = "#2E415A", size = 16, face = "bold.italic"),
+      legend.title = element_text(color = "#2E415A", size = 12, face = "bold"),
+      legend.text = element_text(color = "#2E415A", size = 10),
+      axis.title = element_text(color = "#2E415A", size = 14),
+      axis.text = element_text(color = "#2E415A", size = 12))+
+    scale_color_manual(values = c("#E0A151","#B04326"),
+                       labels = c("Working on compassion", "Working on conscientiousness"))
+
+
+
+```
+
+Again taking out the conscientiousness folks:
+
+```{r plot-6}
+
+ggplot(CompState, aes(x = StateLinearTime, y = statecompassion, group = id, color = intervention)) +
+  geom_line() +
+  labs(title = "Changes in state-level compassion", x = "Week", y = "State Compassion (1-5)", color = "Intervention group") +
+   theme(plot.title = element_text(color = "#2E415A", size = 18, face = "bold"),
+          plot.subtitle = element_text(color = "#2E415A", size = 16),
+          strip.text.x = element_text(color = "#2E415A", size = 16, face = "bold.italic"),
+      legend.title = element_text(color = "#2E415A", size = 12, face = "bold"),
+      legend.text = element_text(color = "#2E415A", size = 10),
+      axis.title = element_text(color = "#2E415A", size = 14),
+      axis.text = element_text(color = "#2E415A", size = 12))+
+    scale_color_manual(values = c("#E0A151","#B04326"),
+                       labels = c("Working on compassion", "Working on conscientiousness"))
+
+
+
+```
+

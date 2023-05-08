@@ -1,0 +1,411 @@
+---
+title: "Portfolio 1: Thesis Part 1 (Trait-Level Analyses)"
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=TRUE)
+```
+
+
+This is part 1 of the analyses for my master's thesis project, which was titled "Effects of a Short-Term Volitional Intervention Promoting Moral and Non-Moral Personality Change." Here is the abstract of my thesis for some context:
+
+> People can intentionally change specific personality traits. However, it is unclear whether such interventions are effective at changing moral character traits. The present study (total N = 179), which utilized two active intervention groups for mutual comparisons, examined whether a 5-week goal-setting intervention could lead to trait change for a moral trait, compassion (n = 87), or the Big 5 trait of conscientiousness (n = 92). Participants self-selected into one condition after getting feedback on where they stood on these traits in relation to the population norm and completing a brief reflection task. They set implementation intentions and reflected on their progress every 3 days for the duration of the intervention. State assessments were collected every 3 days in addition to self- and observer-report trait assessments at pre- and post-test, with follow-up self-report assessments 2 weeks post-program. Results from analyses of self-report trait and state assessments indicated that participants in both intervention groups were able to successfully change their personalities in the short term, providing preliminary evidence that implementation intention-based volitional personality change interventions can be useful tools for both moral and non-moral trait change. 
+
+For all of my thesis analyses (parts/portfolios 1-4) my code was modeled after the code of [Stieger et al. (2020)](https://journals.sagepub.com/doi/pdf/10.1002/per.2267?casa_token=Jq_sdyLlvDkAAAAA:voEE-qLnu6Vf51AigHKGN4H725UJPD-W00Cvr4GNjAcZdMBboRB47bF-RX4crih5MAiOMvOHmTSy), which can be found [here](https://osf.io/an5dj/). Before running my own analyses, I first re-ran all of their code with their data and matched it with the results reported in their paper (everything worked out as expected).
+
+### Loading Packages and Data
+
+```{r load-packages-data}
+
+library(foreign)
+
+VPCcombined = read.spss("VPCcombinedclean_3.26.23 with covariates_copy.sav",
+                      to.data.frame = TRUE,
+                      reencode = TRUE,
+                      use.value.labels = FALSE)
+
+library(nlme)
+library(lme4)
+library(lmerTest)
+library(psych)
+library(multilevel)
+library(tidyverse)
+
+VPCtrait <- filter(VPCcombined, datalevel == 1)
+
+VPCtrait$id <- as.factor(VPCtrait$id)
+VPCtrait$intervention <- as.factor(VPCtrait$intervention)
+
+ConsTrait <- filter(VPCtrait, intervention == 1)
+CompTrait <- filter(VPCtrait, intervention == 0)
+
+
+
+```
+
+
+
+----------------
+
+
+*From my thesis prospectus:*
+
+"For the trait data (from wave 1, pretest, wave 11, posttest, and wave 12, follow-up), modeling the analytic approach of Stieger et al. (2020; 2021), I will conduct a series of longitudinal multilevel models (with Level 1 as Time, from 0-2, and Level 2 as Person) to detect intervention effects. I will first conduct analyses for the conscientiousness and compassion groups separately (to test Hypotheses 1 and 2, respectively) and then I will examine the groups combined and test for Time x Group interactions (to test Hypotheses 3 and 4)."
+
+
+"For all analyses, I will start with an intercept-only model to see the pattern of change over time. Then, based on what I see, I will fit different models of change to the data. With the best-fitting model, I will examine the outcome variables of self-reported compassion and conscientiousness levels through follow-up and report fit indices and effect sizes."
+
+
+### Hypothesis 1 
+
+Hypothesis 1: I hypothesized that those in the **conscientiousness** group will have ***higher levels of trait conscientiousness*** at posttest compared to pretest and that these increases would be retained at follow-up. 
+
+Starting with an intercept only model:
+
+```{r trait-conscienctiousness-null, message=FALSE, warning=FALSE}
+TraitConsNull <- lmer(traitconscientiousness ~  1 +
+                (1 | id), 
+              data = ConsTrait,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(TraitConsNull)
+confint(TraitConsNull)
+rand(TraitConsNull)
+AIC(TraitConsNull)
+BIC(TraitConsNull)
+```
+
+Then a linear model:
+
+```{r trait-conscientiousness-linear, message=FALSE, warning=FALSE}
+TraitConsLin <- lmer(traitconscientiousness ~  TraitLinearTime +
+                (1 + TraitLinearTime | id), 
+              data = ConsTrait,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(TraitConsLin)
+confint(TraitConsLin)
+rand(TraitConsLin)
+AIC(TraitConsLin)
+BIC(TraitConsLin)
+```
+
+And finally a log model:
+
+```{r trait-conscientiousness-log, message=FALSE, warning=FALSE}
+TraitConsLog <- lmer(traitconscientiousness ~  TraitLogTime +
+                (1 + TraitLogTime | id), 
+              data = ConsTrait,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(TraitConsLog)
+confint(TraitConsLog)
+rand(TraitConsLog)
+AIC(TraitConsLog)
+BIC(TraitConsLog)
+```
+
+Of the three models, the logarithmic model has the lowest AIC and BIC values and therefore has the best fit. 
+
+
+I also took the best-fitting model and added the covariate of pre-test level of trait conscientiousness to see if the effects still held:
+
+```{r trait-conscienctiousness-log-with-covariate, message=FALSE, warning=FALSE}
+# TraitConsLogCo <- lmer(traitconscientiousness ~ pretestcons + TraitLogTime +
+#                 (1 + TraitLogTime | id), 
+#               data = ConsTrait,
+#               REML = FALSE,
+#               na.action = "na.omit")
+# 
+# summary(TraitConsLogCo)
+# confint(TraitConsLogCo)
+# rand(TraitConsLogCo)
+# AIC(TraitConsLogCo)
+# BIC(TraitConsLogCo)
+```
+
+And then I also checked to see if there were any significant change patterns in trait-level compassion for those working on their conscientiousness:
+
+```{r trait-conscienctiousness-log-nontarget-trait, message=FALSE, warning=FALSE}
+TraitConsNonTarget <- lmer(traitcompassion ~  TraitLogTime +
+                (1 + TraitLogTime | id), 
+              data = ConsTrait,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(TraitConsNonTarget)
+confint(TraitConsNonTarget)
+rand(TraitConsNonTarget)
+AIC(TraitConsNonTarget)
+BIC(TraitConsNonTarget)
+```
+
+#### Conclusion:
+
+Hypothesis 1 was met: those in the **conscientiousness** group had ***significantly higher levels of trait conscientiousness*** at posttest compared to pretest and these increases were generally retained at follow-up. 
+
+Here is the corresponding section from my thesis results section:
+
+>Hypothesis 1 was supported: those in the conscientiousness group had significantly higher levels of trait conscientiousness at posttest compared to pretest and these increases were generally retained at follow-up (b = 0.13, 95% CI [0.07, 0.18], SE = 0.03, p < .001). There was a medium-large effect for trait conscientiousness for participants working on their conscientiousness (d = 0.52). Those in the conscientiousness group did not increase in trait compassion (b = 0.00, 95% CI [-0.03, 0.04], SE = 0.02, p = 0.89). 
+
+
+
+
+
+
+### Hypothesis 2 
+
+Hypothesis 2: I hypothesized that those in the **compassion** group will have ***higher levels of trait compassion*** at posttest compared to pretest and that these increases would be retained at follow-up. 
+
+Starting with an intercept only model:
+
+```{r trait-compassion-null, message=FALSE, warning=FALSE}
+TraitCompNull <- lmer(traitcompassion ~ 1 +
+                (1 | id), 
+              data = CompTrait,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(TraitCompNull)
+confint(TraitCompNull)
+rand(TraitCompNull)
+AIC(TraitCompNull)
+BIC(TraitCompNull)
+```
+
+Then trying linear:
+
+```{r trait-compassion-linear, message=FALSE, warning=FALSE}
+TraitCompLin <- lmer(traitcompassion ~  TraitLinearTime +
+                (1 + TraitLinearTime | id), 
+              data = CompTrait,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(TraitCompLin)
+confint(TraitCompLin)
+rand(TraitCompLin)
+AIC(TraitCompLin)
+BIC(TraitCompLin)
+```
+
+
+Then trying log:
+
+```{r trait-compassion-log, message=FALSE, warning=FALSE}
+TraitCompLog <- lmer(traitcompassion ~  TraitLogTime +
+                (1 + TraitLogTime | id), 
+              data = CompTrait,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(TraitCompLog)
+confint(TraitCompLog)
+rand(TraitCompLog)
+AIC(TraitCompLog)
+BIC(TraitCompLog)
+```
+
+Again, the logarithmic model has the best fit.
+
+Adding the pretest conscientiousness covariate:
+
+```{r trait-compassion-log-with-covariate, message=FALSE, warning=FALSE}
+TraitCompLogCo <- lmer(traitcompassion ~ pretestcons + TraitLogTime +
+                (1 + TraitLogTime | id), 
+              data = CompTrait,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(TraitCompLogCo)
+confint(TraitCompLogCo)
+rand(TraitCompLogCo)
+AIC(TraitCompLogCo)
+BIC(TraitCompLogCo)
+```
+
+Examining changes in conscientiousness for those working on their compassion:
+
+```{r trait-compassion-log-nontarget-trait, message=FALSE, warning=FALSE}
+TraitCompNonTarget <- lmer(traitconscientiousness ~  TraitLogTime +
+                (1 + TraitLogTime | id), 
+              data = CompTrait,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(TraitCompNonTarget)
+confint(TraitCompNonTarget)
+rand(TraitCompNonTarget)
+AIC(TraitCompNonTarget)
+BIC(TraitCompNonTarget)
+```
+
+
+#### Conclusion:
+
+>Hypothesis 2 was also supported: those in the compassion group had significantly higher levels of trait compassion at posttest compared to pretest and these increases were mostly retained at follow-up (b = 0.05, 95% CI [0.01, 0.09], SE = 0.02, p < .05). There was a medium effect for trait compassion for participants working on their compassion (d = 0.28). Those in the compassion group also did not increase in trait conscientiousness (b = 0.01, 95% CI [-0.03, 0.04], SE = 0.02, p = 0.61). 
+
+### Hypothesis 3
+
+In addition to examining the intervention groups separately, I also examined the groups combined to test for Time x Group interactions (i.e., using each group as a control group for the other).
+
+Hypothesis 3: I hypothesized that **people who chose the conscientiousness intervention** will show ***greater increases in trait conscientiousness compared with the compassion group.***
+
+Testing the group by time (slope) interaction:
+
+Null model first:
+
+```{r trait-conscientiousness-group-by-slope-null, message=FALSE, warning=FALSE}
+ConsInteractionNull <- lmer(traitconscientiousness ~  1 +
+                (1 | id), 
+              data = VPCtrait,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(ConsInteractionNull)
+confint(ConsInteractionNull)
+rand(ConsInteractionNull)
+AIC(ConsInteractionNull)
+BIC(ConsInteractionNull)
+```
+
+
+Then linear:
+```{r trait-conscientiousness-group-by-slope-linear, message=FALSE, warning=FALSE}
+ConsInteractionLin <- lmer(traitconscientiousness ~  TraitLinearTime*intervention +
+                (1 + TraitLinearTime | id), 
+              data = VPCtrait,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(ConsInteractionLin)
+confint(ConsInteractionLin)
+rand(ConsInteractionLin)
+AIC(ConsInteractionLin)
+BIC(ConsInteractionLin)
+```
+
+
+Then log: 
+
+```{r trait-conscientiousness-group-by-slope-log, message=FALSE, warning=FALSE}
+ConsInteractionLog <- lmer(traitconscientiousness ~  TraitLogTime*intervention +
+                (1 + TraitLogTime | id), 
+              data = VPCtrait,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(ConsInteractionLog)
+confint(ConsInteractionLog)
+rand(ConsInteractionLog)
+AIC(ConsInteractionLog)
+BIC(ConsInteractionLog)
+```
+Again, the logarithmic model has the best fit.
+
+
+Adding the pretest level of conscientiousness covariate:
+
+```{r trait-conscientiousness-group-by-slope-log-with-covariate, message=FALSE, warning=FALSE}
+ConsInteractionCo <- lmer(traitconscientiousness ~ pretestcons + TraitLogTime*intervention +
+                (1 + TraitLogTime | id), 
+              data = VPCtrait,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(ConsInteractionCo)
+confint(ConsInteractionCo)
+rand(ConsInteractionCo)
+AIC(ConsInteractionCo)
+BIC(ConsInteractionCo)
+```
+
+
+#### Conclusion:
+
+>Supporting Hypothesis 3, the logarithmic slope by group effect for conscientiousness (b = 0.14, 95% CI [0.07, 0.20], SE = 0.03, p < .001) was significant. The compassion group did not experience a significant increase in trait conscientiousness (p = .90), while the conscientiousness group experienced a 0.14 unit increase in trait conscientiousness (p < .001). The logarithmic slope by group interactions still held when controlling for pretest levels of trait conscientiousness.
+
+
+
+
+### Hypothesis 4
+
+Hypothesis 4: I hypothesized that **people who chose the compassion intervention** will show ***greater increases in trait compassion compared with the conscientiousness group.***
+
+Testing the group by time (slope) interaction:
+
+Testing the null model first—
+
+```{r trait-compassion-group-by-slope-null, message=FALSE, warning=FALSE}
+CompInteractionNull <- lmer(traitcompassion ~  1 +
+                (1 | id), 
+              data = VPCtrait,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(CompInteractionNull)
+confint(CompInteractionNull)
+rand(CompInteractionNull)
+AIC(CompInteractionNull)
+BIC(CompInteractionNull)
+```
+
+Testing a linear model:
+
+```{r trait-compassion-group-by-slope-linear, message=FALSE, warning=FALSE}
+CompInteractionLin <- lmer(traitcompassion ~  TraitLinearTime*intervention +
+                (1 + TraitLinearTime | id), 
+              data = VPCtrait,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(CompInteractionLin)
+confint(CompInteractionLin)
+rand(CompInteractionLin)
+AIC(CompInteractionLin)
+BIC(CompInteractionLin)
+```
+
+Testing a logarithmic model:
+
+```{r trait-compassion-group-by-slope-log, message=FALSE, warning=FALSE}
+CompInteractionLog <- lmer(traitcompassion ~  TraitLogTime*intervention +
+                (1 + TraitLogTime | id), 
+              data = VPCtrait,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(CompInteractionLog)
+confint(CompInteractionLog)
+rand(CompInteractionLog)
+AIC(CompInteractionLog)
+BIC(CompInteractionLog)
+```
+
+Again, the logarithmic model has the best fit. 
+
+With pretest conscientiousness covariate added: 
+
+```{r trait-compassion-group-by-slope-log-with-covariate, message=FALSE, warning=FALSE}
+CompInteractionCo <- lmer(traitcompassion ~ pretestcons + TraitLogTime*intervention +
+                (1 + TraitLogTime | id), 
+              data = VPCtrait,
+              REML = FALSE,
+              na.action = "na.omit")
+
+summary(CompInteractionCo)
+confint(CompInteractionCo)
+rand(CompInteractionCo)
+AIC(CompInteractionCo)
+BIC(CompInteractionCo)
+```
+
+
+#### Conclusion:
+
+>Supporting Hypothesis 4, the logarithmic slope by group effect for compassion (b = -0.05, 95% CI [-0.10, -0.00], SE = 0.02, p < .05) was also significant. The compassion group experienced a small but significant 0.05 unit increase in trait compassion (p < .01), while the conscientiousness group did not experience an increase (0.05 – 0.05) in trait compassion (p < .01). The logarithmic slope by group interactions still held when controlling for pretest levels of trait conscientiousness.
+
