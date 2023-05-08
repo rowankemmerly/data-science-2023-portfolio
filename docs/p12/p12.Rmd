@@ -3,12 +3,11 @@ title: "Portfolio 12: Webscraping Pitchfork"
 
 ---
 
-For this portfolio, I decided to scrape Pitchfork (a music review website) to be able to work with data on what reviewers on the site have ranked the top 200 albums of the 2000s and the top 200 albums of the 2010s. I'll be scraping the 2010s list first because it's all on one page (the 2000s list is broken up into 10 pages).
+For this portfolio, I decided to scrape Pitchfork (a music review website) to be able to work with data on what reviewers on the site have ranked the top 200 albums of the 2010s.
 
 
 
-
-### Load packages, checking permissions
+### Loading packages, checking permissions
 
 ```{r load-packages, message = FALSE}
 library(tidyverse) 
@@ -16,12 +15,9 @@ library(skimr)
 library(rvest)
 library(robotstxt)
 library(xml2)
+library(dplyr)
+library(tidyr)
 ```
-
-<!-- ```{r load-data, message = FALSE, eval = TRUE} -->
-<!-- # Remove eval = FALSE or set it to TRUE once data is ready to be loaded -->
-<!-- uoe_art <- read_csv("data/uoe-art.csv") -->
-<!-- ``` -->
 
 
 ```{r checking-permissions}
@@ -32,42 +28,14 @@ paths_allowed("https://pitchfork.com/features/lists-and-guides/")
 
 ## Top 200 Albums of the 2010s
 
+### Prepping the dataset
+
+I used SelectorGadget to figure out that I need to scrape ".heading-h3" for the ranking number and "h2" for a string with this format:
+
+Artist: Album Name (Year)
+
 
 ```{r scrape-2010s}
-# 
-# # set url
-# url_2010s <- "https://pitchfork.com/features/lists-and-guides/the-200-best-albums-of-the-2010s/"
-# 
-# # read first page
-# page <- read_html(url_2010s)
-# 
-# # scrape album titles and artist names
-# 
-# titlesartistsyears <- page %>%
-#   html_node(".body__inner-container") %>%
-#   html_node("h2")
-# 
-#   
-#   #html_nodes(".GkhXA") %>%
-# 
-# # check that album titles and artist names were scraped correctly
-# titlesartistsyears
-# 
-# # scrape rankings
-# rankings <- page %>%
-#   html_node(".body__inner-container") %>%
-#   html_node(".heading-h3")
-#   
-#   
-# # check that rankings were scraped correctly
-# rankings
-# 
-# 
-# # put together in a data frame
-# top_200_2010s <- tibble(
-#   titles_artists = titlesartistsyears,
-#   rankings = rankings
-# )
 
 
 library(rvest)
@@ -86,145 +54,9 @@ albums_df <- tibble(titlesartistsyears = titlesartistsyears, rankings = rankings
 
 Now I'm going to work on cleaning up the data I've scraped.
 
+First I need to separate the "titlesartistsyears" variable into three distinct variables.
 
-```{r clean-strings}
-# # Separate the string into three variables
-# separated_titlesartistsyears <- titlesartistsyears %>%
-#   str_extract_all("[^:()]+") %>%
-#   unlist() %>%
-#   trimws() %>%
-#   as_tibble() %>%
-#   separate(value, c("artist", "album_name", "year"), sep = " \\(|\\):")
-# 
-# # View the output
-# separated_titlesartistsyears
-
-
-
-
-albums_df_separated <- albums_df %>%
-  separate(titlesartistsyears, c("artist", "album", "year"), sep = " : |\\(|\\)")
-
-
-library(stringr)
-library(tidyr)
-# 
-# # Create a sample HTML string
-# html_string <- '<h2><a href="/reviews/albums/tyler-the-creator-igor/"><span class="title">Tyler, the Creator:</span> <em>Igor</em> <span class="pubdate">(2019)</span></a></h2>'
-# 
-# # Extract the text from the HTML string
-# text_string <- str_extract_all(html_string, "\\b\\w.*?\\b")
-# 
-# # Separate the text into variables
-# separated_string <- text_string %>%
-#   as_tibble() %>%
-#   separate(value, c("artist", "album", "year"), sep = " : |\\(|\\)")
-# 
-# # View the output
-# separated_string
-
-library(stringr)
-library(tidyr)
-
-# # Example data frame with a column "title"
-# df <- data.frame(title = c("Huerco S.: For Those of You Who Have Never (and Also Those Who Have) (2016)", 
-#                            "(Sandy) Alex G: DSU (2014)", 
-#                            "Jai Paul: Leak 04-13 (Bait Ones) (2019)"))
-# 
-# # Separate the "title" column into variables
-# df_separated <- df %>%
-#   separate(title, c("artist", "album", "year"), sep = " : |(?<=\\))\\s(?=\\()", extra = "merge")
-# 
-# # Extract the year from the album field if necessary
-# df_separated$year <- ifelse(is.na(df_separated$year), str_extract(df_separated$album, "\\(\\d{4}\\)"), df_separated$year)
-# 
-# # Remove the parentheses from the album and year fields
-# df_separated$album <- str_remove_all(df_separated$album, "\\(|\\)")
-# df_separated$year <- str_remove_all(df_separated$year, "\\(|\\)")
-# 
-# # View the output
-# df_separated
-# 
-
-
-# library(dplyr)
-# 
-# #example data frame with the album titles
-# problematic_a <- data.frame(title = c("Kendrick Lamar: To Pimp a Butterfly (2015)",
-#                                   "Frank Ocean: Channel Orange (2012)",
-#                                   "Huerco S.: For Those of You Who Have Never (and Also Those Who Have) (2016)",
-#                                   "(Sandy) Alex G: DSU (2014)",
-#                                   "Jai Paul: Leak 04-13 (Bait Ones) (2019)",
-#                                   "Kanye West: My Beautiful Dark Twisted Fantasy (2010)"))
-# 
-# # add problematic strings manually
-# problematic_strings <- data.frame(titlesartistsyears = c("Huerco S.: For Those of You Who Have Never (and Also Those Who Have) (2016)", 
-#                                             "(Sandy) Alex G: DSU (2014)",
-#                                             "Jai Paul: Leak 04-13 (Bait Ones) (2019)"))
-# 
-# # filter out problematic strings
-# filtered_albums_df <- albums_df %>%
-#   filter(!grepl(":.*\\(.*\\)", title)) 
-# 
-# # separate title into artist, album, and year columns
-# separated_df <- filtered_df %>%
-#   separate(title, c("artist", "album", "year"), sep = ": | \\(", extra = "merge")
-# 
-# # add problematic strings manually
-# problematic_strings <- data.frame(title = c("Huerco S.: For Those of You Who Have Never (and Also Those Who Have) (2016)", 
-#                                             "(Sandy) Alex G: DSU (2014)",
-#                                             "Jai Paul: Leak 04-13 (Bait Ones) (2019)"))
-# manually_added_df <- problematic_strings %>%
-#   mutate(artist = c("Huerco S.", "(Sandy) Alex G", "Jai Paul"),
-#          album = c("For Those of You Who Have Never (and Also Those Who Have)", "DSU", "Leak 04-13 (Bait Ones)"),
-#          year = c("2016", "2014", "2019"))
-# 
-# # combine data frames
-# final_df <- rbind(separated_df, manually_added_df)
-
-
-library(dplyr)
-
-# example data frame with the album titles
-albums_df <- data.frame(title = c("Kendrick Lamar: To Pimp a Butterfly (2015)",
-                                  "Frank Ocean: Channel Orange (2012)",
-                                  "Huerco S.: For Those of You Who Have Never (and Also Those Who Have) (2016)",
-                                  "(Sandy) Alex G: DSU (2014)",
-                                  "Jai Paul: Leak 04-13 (Bait Ones) (2019)",
-                                  "Kanye West: My Beautiful Dark Twisted Fantasy (2010)"))
-
-# filter out problematic strings
-filtered_df <- albums_df %>%
-  filter(!grepl(":.*\\(.*\\)", title)) 
-
-# separate title into artist, album, and year columns
-separated_df <- filtered_df %>%
-  separate(title, c("artist", "album", "year"), sep = ": | \\(", extra = "merge")
-
-# add problematic strings manually
-problematic_strings <- data.frame(title = c("Huerco S.: For Those of You Who Have Never (and Also Those Who Have) (2016)", 
-                                            "(Sandy) Alex G: DSU (2014)",
-                                            "Jai Paul: Leak 04-13 (Bait Ones) (2019)"))
-
-
-new_row <- data.frame(artist = "Huerco S.", album = "For Those of You Who Have Never (and Also Those Who Have)", year = "2016")
-album_df <- rbind(album_df, new_row)
-
-
-# combine data frames
-final_df <- rbind(separated_df, manually_added_df)
-
-
-# 
-# # Separate the "title" column into variables
-# albums_df_separated <- albums_df %>%
-#   separate(titlesartistsyears, c("artist", "album", "year"), sep = " : (?=[^(]*\\))|\\(|\\)")
-
-
-
-```
-
-
+When I first tried to do this, there were three cases that just wouldn't work with my code because they have extra parentheses in the title or artist name, so I decided to filter them out and then manually put them back in. 
 
 ```{r clean-strings-new}
 
@@ -235,11 +67,7 @@ albums_df_197 <- albums_df %>%
   filter(!row_number() %in% c(11, 34, 106))
 
 
-# albums_df_197_separated <- albums_df_197 %>%
-#   separate(titlesartistsyears, c("artist", "album", "year"), sep = " : |\\(|\\)")
-
-
-# separate string into artist and rest of string
+# with filtered data frame: separate string into artist and rest of string
 albums_df_197_separated <- albums_df_197 %>%
   separate(titlesartistsyears, c("artist", "rest"), sep = ": ") %>%
   # separate rest of string into album and year
@@ -249,256 +77,76 @@ albums_df_197_separated <- albums_df_197 %>%
 albums_df_197_separated <- albums_df_197_separated %>%
   mutate(across(everything(), str_trim))
 
+# Now I need to add back in the 3 problematic strings.
 
+new_row <- data.frame(artist = "Huerco S.", album = "For Those of You Who Have Never (and Also Those Who Have)", year = "2016", rankings = "190.")
+albums_df_198 <- rbind(albums_df_197_separated, new_row)
+
+new_row <- data.frame(artist = "(Sandy) Alex G", album = "DSU", year = "2014", rankings = "167.")
+albums_df_199 <- rbind(albums_df_198, new_row)
+
+new_row <- data.frame(artist = "Jai Paul", album = "Leak 04-13 (Bait Ones)", year = "2019", rankings = "95.")
+albums_df_200 <- rbind(albums_df_199, new_row)
+
+albums_df_200
 ```
 
 
+Now I need to make sure all of my variables have the right formatting 
 
-```{r scrape-2010s-new-bad}
-# set url
-url_2010s <- "https://pitchfork.com/features/lists-and-guides/the-200-best-albums-of-the-2010s/"
+```{r fixing-variables}
 
-# read first page
-page <- read_html(url_2010s)
 
-# check that the page was successfully read
-page
+# fixing the "ranking" variable
 
-# scrape album titles and artist names
-titlesartists <- page %>%
-  html_nodes(".title") %>%
-  html_text()
+albums_df_200 <- albums_df_200 %>%
+  mutate(ranking = as.numeric(sub("\\.$", "", rankings)))
 
-# check that album titles and artist names were scraped correctly
-titlesartists
+albums_df_200 <- albums_df_200 %>%
+select(-rankings)
 
-# scrape rankings
-rankings <- page %>%
-  html_nodes(".number") %>%
-  html_text()
+# fixing the "year" variable so it is actually a year
 
-# check that rankings were scraped correctly
-rankings
+albums_df_200 <- albums_df_200 %>%
+  mutate(year = as.numeric(year))
 
-# put together in a data frame
-top_200_2010s <- tibble(
-  titles_artists = titlesartists,
-  rankings = rankings
-)
-
-# check the resulting dataframe
-top_200_2010s
+albums_df_200
 ```
 
+### Looking at the data
 
-### Exercise 2
+First, I think I want to create a new data frame that focuses on each discrete artist that has at least one album in the list. Specifically, I want to be able to look at average list ranking and number of albums in the list for each artist. 
 
-```{r scrape-artist-names}
-# artists <- page %>%
-#   html_nodes(".iteminfo") %>%
-#   html_node(".artist") %>%
-#   html_text() 
-```
+```{r artist-centered-dataset}
 
-### Exercise 3
-
-```{r create-tibble}
-# first_ten <- tibble(
-#   title = titles,
-#   artist = artists,
-#   link = links
-# )
-```
-
-### Exercise 4
-
-```{r second-url}
-# set url ----------------------------------------------------------------------
-# 
-# second_url <- "https://collections.ed.ac.uk/art/search/*:*/Collection:%22edinburgh+college+of+art%7C%7C%7CEdinburgh+College+of+Art%22?offset=10"
-# 
-# # read second page --------------------------------------------------------------
-# 
-# page <- read_html(second_url)
-# 
-# # scrape titles ----------------------------------------------------------------
-# 
-# titles <- page %>%
-#   html_nodes(".iteminfo") %>%
-#   html_node("h3 a") %>%
-#   html_text() %>%
-#   str_squish()
-# 
-# # scrape links -----------------------------------------------------------------
-# 
-# links <- page %>%
-#   html_nodes(".iteminfo") %>%
-#   html_node("h3 a") %>%
-#   html_attr("href") %>%
-#   str_replace("\\.", "https://collections.ed.ac.uk/art")
-# 
-# # scrape artists ---------------------------------------------------------------
-# 
-# artists <- page %>%
-#   html_nodes(".iteminfo") %>%
-#   html_node(".artist") %>%
-#   html_text()
-# 
-# # put together in a data frame -------------------------------------------------
-# 
-# second_ten <- tibble(
-#   title = titles,
-#   artist = artists,
-#   link = links
-# )
-# ```
-
-
-### Exercise 5
-
-# ```{r scrape-page-function}
-# scrape_page <- function(url){
-#
-#   # read page
-#   page <- read_html(url)
-#
-#   # scrape titles
-#   titles <- page %>%
-#     html_nodes(".iteminfo") %>%
-#     html_node("h3 a") %>%
-#     html_text() %>%
-#     str_squish()
-#
-#   # scrape links
-#   links <- page %>%
-#     html_nodes(".iteminfo") %>%
-#     html_node("h3 a") %>%
-#     html_attr("href") %>%
-#     str_replace("\\.", "https://collections.ed.ac.uk/art")
-#
-#   # scrape artists
-#   artists <- page %>%
-#     html_nodes(".iteminfo") %>%
-#     html_node(".artist") %>%
-#     html_text()
-#
-#   # create and return tibble
-#   tibble(
-#     title = titles,
-#     artist = artists,
-#     link = links
-#   )
-#
-# }
-# ```
-
-
-# ### Exercise 6
-# 
-# ```{r trying-out-function}
-# 
-# scrape_page(first_url)
-# scrape_page(second_url)
-# 
-# ```
-
-# Yes, the output looks good to me!
-
-
-### Exercise 7
-
-# ```{r iteration}
-# root <- "https://collections.ed.ac.uk/art/search/*:*/Collection:%22edinburgh+college+of+art%7C%7C%7CEdinburgh+College+of+Art%22?offset="
-# numbers <- seq(from = 0, to = 2900, by = 10)
-# urls <- glue("{root}{numbers}")
-```
-
-
-<!-- ### Exercise 8 -->
-
-<!-- ```{r creating-new-df} -->
-<!-- # uoe_art <- map_dfr(urls, scrape_page) -->
-<!-- ``` -->
-
-
-<!-- ### Exercise 9 -->
-
-<!-- # ```{r new-df} -->
-<!-- # write_csv(uoe_art, file = "data/uoe-art.csv") -->
-<!-- #  -->
-<!-- # uoe_art <- read_csv("data/uoe-art.csv") -->
-<!-- #  -->
-<!-- # uoe_art -->
-<!-- # ``` -->
-
-<!-- For whatever reason there are only 982 pieces of art showing up and not 3017! (I took a screenshot of this on the UOE website that's in this repo.) -->
-
-
-### Exercise 10
-
-```{r separate-title-date, error = TRUE}
-uoe_art <- uoe_art %>%
-  separate(title, into = c("title", "date"), sep = "\\(") %>%
-  mutate(year = str_remove(date, "\\)") %>% as.numeric()) %>%
-  select(title, artist, year, link)
-```
-
-So it looks like it's throwing out information beyond title, artist, year, and link, but I guess that's okay since we just want the titles and years. And it's talking about how for some pieces there is no date so date is "NA"—we knew this already. 
-
-
-### Exercise 11
-
-```{r summary-of-df}
-
-skim(uoe_art)
-
-```
-
-40 are missing an artist name, 463 are missing a year.
-
-### Exercise 12
-
-```{r histogram}
-
-uoe_art_histogram <- ggplot (uoe_art, aes(x = year)) +
-  geom_histogram(binwidth = 10)
-
-  
-uoe_art_histogram
-  
-```
-Nothing especially out of the ordinary—though this could be because my dataset is smaller than what the lab was originally oriented for. 
-
-### Exercise 13
-
-(not relevant for the data set I'm working with)
-
-### Exercise 14
-
-```{r most-common-artist}
-
-most_common_artist <- uoe_art %>%
+albums_by_artist <- albums_df_200 %>%
   group_by(artist) %>%
-  summarise(count = n()) %>%
-  arrange(desc(count))
+  summarize(average_ranking = mean(ranking), 
+            albums_in_list = n()) 
 
-most_common_artist
 
 ```
 
-Other than works for which the artist is unknown, Emma Gillies is the most common artist in the collection! I hadn't heard of her before, but it looks like her alma mater was UOE (she was a potter) so it makes sense that they have a lot of her pieces in thier collection.
+First I will sort this in ascending order by average ranking:
 
+```{r lowest-average-ranking}
+albums_by_artist_lowestavg <- albums_by_artist %>%
+   arrange(average_ranking)
 
-### Exercise 15
-
-```{r child-in-title}
-library(tidyverse)
-
-uoe_art %>% 
-  filter(str_detect(title, "child|Child")) %>% 
-  summarise(n = n())
-
+albums_by_artist_lowestavg
 ```
 
-There are four works of art with "child" or "Child: in the title!
+
+Wow I feel so vindicated!! Fiona Apple is one of my all-time favorite artists and she has the lowest average album ranking! (That is just from one album, but still. That album is the best album of the 2010s, IMHO.)
+
+Now I will sort the dataset in descending order by number of albums in the list:
+
+```{r most-albums-in-list}
+albums_by_artist_listnumber <- albums_by_artist %>%
+     arrange(desc(albums_in_list))
+
+albums_by_artist_listnumber
+```
+
+Looks like Beyoncé and Kendrick Lamar are the only artists with 3 albums in the top 200. That checks. 
 
