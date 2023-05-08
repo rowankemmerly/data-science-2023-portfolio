@@ -11,7 +11,7 @@
 
 
 
-<title>Portfolio 2: Thesis Part 2 (State-Level Analyses)</title>
+<title>Portfolio 12: Webscraping Pitchfork</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -348,1312 +348,185 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">Portfolio 2: Thesis Part 2 (State-Level
-Analyses)</h1>
+<h1 class="title toc-ignore">Portfolio 12: Webscraping Pitchfork</h1>
 
 </div>
 
 
-<p>This is part 2 of the analyses for my master’s thesis project, which
-was titled “Effects of a Short-Term Volitional Intervention Promoting
-Moral and Non-Moral Personality Change.” Here is the abstract of my
-thesis for some context:</p>
-<blockquote>
-<p>People can intentionally change specific personality traits. However,
-it is unclear whether such interventions are effective at changing moral
-character traits. The present study (total N = 179), which utilized two
-active intervention groups for mutual comparisons, examined whether a
-5-week goal-setting intervention could lead to trait change for a moral
-trait, compassion (n = 87), or the Big 5 trait of conscientiousness (n =
-92). Participants self-selected into one condition after getting
-feedback on where they stood on these traits in relation to the
-population norm and completing a brief reflection task. They set
-implementation intentions and reflected on their progress every 3 days
-for the duration of the intervention. State assessments were collected
-every 3 days in addition to self- and observer-report trait assessments
-at pre- and post-test, with follow-up self-report assessments 2 weeks
-post-program. Results from analyses of self-report trait and state
-assessments indicated that participants in both intervention groups were
-able to successfully change their personalities in the short term,
-providing preliminary evidence that implementation intention-based
-volitional personality change interventions can be useful tools for both
-moral and non-moral trait change.</p>
-</blockquote>
-<div id="loading-packages-and-data" class="section level3">
-<h3>Loading Packages and Data</h3>
-<pre class="r"><code>library(foreign)
-
-VPCcombined = read.spss(&quot;VPCcombinedclean_3.26.23 with covariates_copy.sav&quot;,
-                      to.data.frame = TRUE,
-                      reencode = TRUE,
-                      use.value.labels = FALSE)</code></pre>
-<pre><code>## re-encoding from UTF-8</code></pre>
-<pre class="r"><code>library(nlme)
-library(lme4)</code></pre>
-<pre><code>## Loading required package: Matrix</code></pre>
+<p>For this portfolio, I decided to scrape Pitchfork (a music review
+website) to be able to work with data on what reviewers on the site have
+ranked the top 200 albums of the 2010s.</p>
+<div id="loading-packages-checking-permissions" class="section level3">
+<h3>Loading packages, checking permissions</h3>
+<pre class="r"><code>library(tidyverse) 
+library(skimr)
+library(rvest)
+library(robotstxt)
+library(xml2)
+library(dplyr)
+library(tidyr)</code></pre>
+<pre class="r"><code>paths_allowed(&quot;https://pitchfork.com/features/lists-and-guides/&quot;)</code></pre>
 <pre><code>## 
-## Attaching package: &#39;lme4&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:nlme&#39;:
-## 
-##     lmList</code></pre>
-<pre class="r"><code>library(lmerTest)</code></pre>
-<pre><code>## 
-## Attaching package: &#39;lmerTest&#39;</code></pre>
-<pre><code>## The following object is masked from &#39;package:lme4&#39;:
-## 
-##     lmer</code></pre>
-<pre><code>## The following object is masked from &#39;package:stats&#39;:
-## 
-##     step</code></pre>
-<pre class="r"><code>library(psych)
-library(multilevel)</code></pre>
-<pre><code>## Loading required package: MASS</code></pre>
-<pre class="r"><code>library(tidyverse)</code></pre>
-<pre><code>## ── Attaching packages
-## ───────────────────────────────────────
-## tidyverse 1.3.2 ──</code></pre>
-<pre><code>## ✔ ggplot2 3.4.0      ✔ purrr   1.0.1 
-## ✔ tibble  3.1.8      ✔ dplyr   1.0.10
-## ✔ tidyr   1.2.1      ✔ stringr 1.5.0 
-## ✔ readr   2.1.3      ✔ forcats 0.5.2 
-## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-## ✖ ggplot2::%+%()    masks psych::%+%()
-## ✖ ggplot2::alpha()  masks psych::alpha()
-## ✖ dplyr::collapse() masks nlme::collapse()
-## ✖ tidyr::expand()   masks Matrix::expand()
-## ✖ dplyr::filter()   masks stats::filter()
-## ✖ dplyr::lag()      masks stats::lag()
-## ✖ tidyr::pack()     masks Matrix::pack()
-## ✖ dplyr::select()   masks MASS::select()
-## ✖ tidyr::unpack()   masks Matrix::unpack()</code></pre>
-<pre class="r"><code>VPCstate &lt;- filter(VPCcombined, datalevel == 2)
-
-VPCstate$id &lt;- as.factor(VPCstate$id)
-VPCstate$intervention &lt;- as.factor(VPCstate$intervention)
-
-ConsState &lt;- filter(VPCstate, intervention == 1)
-CompState &lt;- filter(VPCstate, intervention == 0)</code></pre>
+ pitchfork.com</code></pre>
+<pre><code>## [1] TRUE</code></pre>
 </div>
-<div id="hypothesis-5" class="section level3">
-<h3>Hypothesis 5</h3>
-<p>Hypothesis 5: I hypothesized that those in the
-<strong>conscientiousness</strong> group will experience significant
-<strong><em>increases levels in state conscientiousness</em></strong>
-over the duration of the study.</p>
-<p>Starting with an intercept only model:</p>
-<pre class="r"><code>StateConsNull &lt;- lmer(stateconscientiousness ~  1 +
-                (1 | id), 
-              data = ConsState,
-              REML = FALSE,
-              na.action = &quot;na.omit&quot;)
+<div id="top-200-albums-of-the-2010s" class="section level2">
+<h2>Top 200 Albums of the 2010s</h2>
+<div id="prepping-the-dataset" class="section level3">
+<h3>Prepping the dataset</h3>
+<p>I used SelectorGadget to figure out that I need to scrape
+“.heading-h3” for the ranking number and “h2” for a string with this
+format:</p>
+<p>Artist: Album Name (Year)</p>
+<pre class="r"><code>library(rvest)
+library(tidyverse)
 
-summary(StateConsNull)</code></pre>
-<pre><code>## Linear mixed model fit by maximum likelihood . t-tests use Satterthwaite&#39;s
-##   method [lmerModLmerTest]
-## Formula: stateconscientiousness ~ 1 + (1 | id)
-##    Data: ConsState
-## 
-##      AIC      BIC   logLik deviance df.resid 
-##    674.3    687.1   -334.2    668.3      521 
-## 
-## Scaled residuals: 
-##     Min      1Q  Median      3Q     Max 
-## -4.6389 -0.4284  0.1494  0.5853  2.2255 
-## 
-## Random effects:
-##  Groups   Name        Variance Std.Dev.
-##  id       (Intercept) 0.2762   0.5255  
-##  Residual             0.1351   0.3676  
-## Number of obs: 524, groups:  id, 104
-## 
-## Fixed effects:
-##              Estimate Std. Error        df t value Pr(&gt;|t|)    
-## (Intercept)   3.88284    0.05566 105.75143   69.76   &lt;2e-16 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code>confint(StateConsNull)</code></pre>
-<pre><code>##                 2.5 %    97.5 %
-## .sig01      0.4519599 0.6164900
-## .sigma      0.3442030 0.3937612
-## (Intercept) 3.7722033 3.9925270</code></pre>
-<pre class="r"><code>rand(StateConsNull)</code></pre>
-<pre><code>## ANOVA-like table for random-effects: Single term deletions
-## 
-## Model:
-## stateconscientiousness ~ (1 | id)
-##          npar  logLik     AIC    LRT Df Pr(&gt;Chisq)    
-## &lt;none&gt;      3 -334.17  674.34                         
-## (1 | id)    2 -518.61 1041.22 368.88  1  &lt; 2.2e-16 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code>AIC(StateConsNull)</code></pre>
-<pre><code>## [1] 674.3369</code></pre>
-<pre class="r"><code>BIC(StateConsNull)</code></pre>
-<pre><code>## [1] 687.1213</code></pre>
-<p>Then linear:</p>
-<pre class="r"><code>StateConsLin &lt;- lmer(stateconscientiousness ~  StateLinearTime +
-                (1 + StateLinearTime | id), 
-              data = ConsState,
-              REML = FALSE,
-              na.action = &quot;na.omit&quot;)
+url &lt;- &quot;https://pitchfork.com/features/lists-and-guides/the-200-best-albums-of-the-2010s/&quot;
+page &lt;- read_html(url)
 
-summary(StateConsLin)</code></pre>
-<pre><code>## Linear mixed model fit by maximum likelihood . t-tests use Satterthwaite&#39;s
-##   method [lmerModLmerTest]
-## Formula: stateconscientiousness ~ StateLinearTime + (1 + StateLinearTime |  
-##     id)
-##    Data: ConsState
-## 
-##      AIC      BIC   logLik deviance df.resid 
-##    660.5    686.1   -324.2    648.5      518 
-## 
-## Scaled residuals: 
-##     Min      1Q  Median      3Q     Max 
-## -4.6026 -0.4440  0.1110  0.5069  2.3193 
-## 
-## Random effects:
-##  Groups   Name            Variance Std.Dev. Corr 
-##  id       (Intercept)     0.260815 0.51070       
-##           StateLinearTime 0.002077 0.04558  -0.10
-##  Residual                 0.120469 0.34709       
-## Number of obs: 524, groups:  id, 104
-## 
-## Fixed effects:
-##                  Estimate Std. Error        df t value Pr(&gt;|t|)    
-## (Intercept)      3.809459   0.061033 94.467349   62.42   &lt;2e-16 ***
-## StateLinearTime  0.018935   0.009061 60.158480    2.09   0.0409 *  
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## Correlation of Fixed Effects:
-##             (Intr)
-## StateLinrTm -0.443</code></pre>
-<pre class="r"><code>confint(StateConsLin)</code></pre>
-<pre><code>##                         2.5 %     97.5 %
-## .sig01           0.4216267150 0.61949606
-## .sig02          -0.4595190941 0.40425491
-## .sig03           0.0242768007 0.06734668
-## .sigma           0.3232425831 0.37388123
-## (Intercept)      3.6867607927 3.92966282
-## StateLinearTime  0.0004264299 0.03738372</code></pre>
-<pre class="r"><code>rand(StateConsLin)</code></pre>
-<pre><code>## ANOVA-like table for random-effects: Single term deletions
-## 
-## Model:
-## stateconscientiousness ~ StateLinearTime + (1 + StateLinearTime | id)
-##                                               npar  logLik    AIC    LRT Df
-## &lt;none&gt;                                           6 -324.24 660.48          
-## StateLinearTime in (1 + StateLinearTime | id)    4 -329.63 667.26 10.778  2
-##                                               Pr(&gt;Chisq)   
-## &lt;none&gt;                                                     
-## StateLinearTime in (1 + StateLinearTime | id)   0.004566 **
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code>AIC(StateConsLin)</code></pre>
-<pre><code>## [1] 660.4847</code></pre>
-<pre class="r"><code>BIC(StateConsLin)</code></pre>
-<pre><code>## [1] 686.0537</code></pre>
-<p>Then log:</p>
-<pre class="r"><code>StateConsLog &lt;- lmer(stateconscientiousness ~  StateLogTime +
-                (1 + StateLogTime | id), 
-              data = ConsState,
-              REML = FALSE,
-              na.action = &quot;na.omit&quot;)
+titlesartistsyears &lt;- page %&gt;% html_nodes(&quot;h2&quot;) %&gt;% html_text()
+rankings &lt;- page %&gt;% html_nodes(&quot;.heading-h3&quot;) %&gt;% html_text()
 
-summary(StateConsLog)</code></pre>
-<pre><code>## Linear mixed model fit by maximum likelihood . t-tests use Satterthwaite&#39;s
-##   method [lmerModLmerTest]
-## Formula: stateconscientiousness ~ StateLogTime + (1 + StateLogTime | id)
-##    Data: ConsState
-## 
-##      AIC      BIC   logLik deviance df.resid 
-##    654.7    680.2   -321.3    642.7      518 
-## 
-## Scaled residuals: 
-##     Min      1Q  Median      3Q     Max 
-## -4.8719 -0.4266  0.1452  0.5083  2.3417 
-## 
-## Random effects:
-##  Groups   Name         Variance Std.Dev. Corr 
-##  id       (Intercept)  0.30322  0.5507        
-##           StateLogTime 0.03517  0.1875   -0.35
-##  Residual              0.11591  0.3404        
-## Number of obs: 524, groups:  id, 104
-## 
-## Fixed effects:
-##              Estimate Std. Error       df t value Pr(&gt;|t|)    
-## (Intercept)   3.77394    0.06967 85.75994  54.166   &lt;2e-16 ***
-## StateLogTime  0.07676    0.03339 66.84595   2.299   0.0247 *  
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## Correlation of Fixed Effects:
-##             (Intr)
-## StateLogTim -0.615</code></pre>
-<pre class="r"><code>confint(StateConsLog)</code></pre>
-<pre><code>##                    2.5 %     97.5 %
-## .sig01        0.44764476 0.67714469
-## .sig02       -0.60994223 0.04108388
-## .sig03        0.11842413 0.26180840
-## .sigma        0.31701937 0.36683913
-## (Intercept)   3.63392800 3.91121780
-## StateLogTime  0.00957924 0.14380705</code></pre>
-<pre class="r"><code>rand(StateConsLog)</code></pre>
-<pre><code>## ANOVA-like table for random-effects: Single term deletions
-## 
-## Model:
-## stateconscientiousness ~ StateLogTime + (1 + StateLogTime | id)
-##                                         npar  logLik    AIC    LRT Df
-## &lt;none&gt;                                     6 -321.34 654.68          
-## StateLogTime in (1 + StateLogTime | id)    4 -329.04 666.08 15.395  2
-##                                         Pr(&gt;Chisq)    
-## &lt;none&gt;                                                
-## StateLogTime in (1 + StateLogTime | id)   0.000454 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code>AIC(StateConsLog)</code></pre>
-<pre><code>## [1] 654.6805</code></pre>
-<pre class="r"><code>BIC(StateConsLog)</code></pre>
-<pre><code>## [1] 680.2495</code></pre>
-<p>Then with pretest conscientiousness covariate:</p>
-<pre class="r"><code>StateConsLogCo &lt;- lmer(stateconscientiousness ~ pretestcons + StateLogTime +
-                (1 + StateLogTime | id), 
-              data = ConsState,
-              REML = FALSE,
-              na.action = &quot;na.omit&quot;)
+albums_df &lt;- tibble(titlesartistsyears = titlesartistsyears, rankings = rankings)</code></pre>
+<p>Now I’m going to work on cleaning up the data I’ve scraped.</p>
+<p>First I need to separate the “titlesartistsyears” variable into three
+distinct variables.</p>
+<p>When I first tried to do this, there were three cases that just
+wouldn’t work with my code because they have extra parentheses in the
+title or artist name, so I decided to filter them out and then manually
+put them back in.</p>
+<pre class="r"><code># filter out rows 11, 34, and 106: these are problematic strings that are messing up my string separation because they have extra parentheses
 
-summary(StateConsLogCo)</code></pre>
-<pre><code>## Linear mixed model fit by maximum likelihood . t-tests use Satterthwaite&#39;s
-##   method [lmerModLmerTest]
-## Formula: 
-## stateconscientiousness ~ pretestcons + StateLogTime + (1 + StateLogTime |  
-##     id)
-##    Data: ConsState
-## 
-##      AIC      BIC   logLik deviance df.resid 
-##    620.3    650.1   -303.1    606.3      517 
-## 
-## Scaled residuals: 
-##     Min      1Q  Median      3Q     Max 
-## -4.9292 -0.4371  0.1290  0.5229  2.3261 
-## 
-## Random effects:
-##  Groups   Name         Variance Std.Dev. Corr 
-##  id       (Intercept)  0.14376  0.3792        
-##           StateLogTime 0.03377  0.1838   -0.11
-##  Residual              0.11695  0.3420        
-## Number of obs: 524, groups:  id, 104
-## 
-## Fixed effects:
-##              Estimate Std. Error       df t value Pr(&gt;|t|)    
-## (Intercept)   1.93958    0.26805 93.39498   7.236 1.27e-10 ***
-## pretestcons   0.52779    0.07482 95.02566   7.054 2.79e-10 ***
-## StateLogTime  0.05430    0.03227 72.07911   1.683   0.0967 .  
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## Correlation of Fixed Effects:
-##             (Intr) prtstc
-## pretestcons -0.979       
-## StateLogTim -0.061 -0.059</code></pre>
-<pre class="r"><code>confint(StateConsLogCo)</code></pre>
-<pre><code>##                    2.5 %    97.5 %
-## .sig01        0.28118504 0.4947114
-## .sig02       -0.48262159 0.4971956
-## .sig03        0.11451452 0.2569617
-## .sigma        0.31837032 0.3685742
-## (Intercept)   1.39076822 2.4938063
-## pretestcons   0.37150867 0.6820899
-## StateLogTime -0.01180899 0.1193748</code></pre>
-<pre class="r"><code>rand(StateConsLogCo)</code></pre>
-<pre><code>## ANOVA-like table for random-effects: Single term deletions
-## 
-## Model:
-## stateconscientiousness ~ pretestcons + StateLogTime + (1 + StateLogTime | id)
-##                                         npar  logLik    AIC    LRT Df
-## &lt;none&gt;                                     7 -303.13 620.25          
-## StateLogTime in (1 + StateLogTime | id)    5 -313.51 637.02 20.766  2
-##                                         Pr(&gt;Chisq)    
-## &lt;none&gt;                                                
-## StateLogTime in (1 + StateLogTime | id)  3.096e-05 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code>AIC(StateConsLogCo)</code></pre>
-<pre><code>## [1] 620.254</code></pre>
-<pre class="r"><code>BIC(StateConsLogCo)</code></pre>
-<pre><code>## [1] 650.0845</code></pre>
-<p>Then examining patterns in state compassion for those working on
-their conscientiousness:</p>
-<pre class="r"><code>StateConsNonTarget &lt;- lmer(statecompassion ~  StateLogTime +
-                (1 + StateLogTime | id), 
-              data = ConsState,
-              REML = FALSE,
-              na.action = &quot;na.omit&quot;)
+albums_df_197 &lt;- albums_df %&gt;%
+  filter(!row_number() %in% c(11, 34, 106))
 
-summary(StateConsNonTarget)</code></pre>
-<pre><code>## Linear mixed model fit by maximum likelihood . t-tests use Satterthwaite&#39;s
-##   method [lmerModLmerTest]
-## Formula: statecompassion ~ StateLogTime + (1 + StateLogTime | id)
-##    Data: ConsState
-## 
-##      AIC      BIC   logLik deviance df.resid 
-##    291.3    316.8   -139.6    279.3      518 
-## 
-## Scaled residuals: 
-##     Min      1Q  Median      3Q     Max 
-## -4.3909 -0.3273  0.0607  0.3873  2.6310 
-## 
-## Random effects:
-##  Groups   Name         Variance Std.Dev. Corr 
-##  id       (Intercept)  0.21041  0.4587        
-##           StateLogTime 0.02064  0.1437   -0.15
-##  Residual              0.05115  0.2262        
-## Number of obs: 524, groups:  id, 104
-## 
-## Fixed effects:
-##              Estimate Std. Error       df t value Pr(&gt;|t|)    
-## (Intercept)   4.39653    0.05416 88.14349  81.181   &lt;2e-16 ***
-## StateLogTime  0.07266    0.02378 62.82443   3.055   0.0033 ** 
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## Correlation of Fixed Effects:
-##             (Intr)
-## StateLogTim -0.470</code></pre>
-<pre class="r"><code>confint(StateConsNonTarget)</code></pre>
-<pre><code>##                    2.5 %    97.5 %
-## .sig01        0.38029768 0.5559718
-## .sig02       -0.44777358 0.2224824
-## .sig03        0.09634480 0.1970335
-## .sigma        0.21031019 0.2440403
-## (Intercept)   4.28798315 4.5031308
-## StateLogTime  0.02555928 0.1207212</code></pre>
-<pre class="r"><code>rand(StateConsNonTarget)</code></pre>
-<pre><code>## ANOVA-like table for random-effects: Single term deletions
-## 
-## Model:
-## statecompassion ~ StateLogTime + (1 + StateLogTime | id)
-##                                         npar  logLik    AIC    LRT Df
-## &lt;none&gt;                                     6 -139.64 291.27          
-## StateLogTime in (1 + StateLogTime | id)    4 -150.70 309.39 22.123  2
-##                                         Pr(&gt;Chisq)    
-## &lt;none&gt;                                                
-## StateLogTime in (1 + StateLogTime | id)   1.57e-05 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code>AIC(StateConsNonTarget)</code></pre>
-<pre><code>## [1] 291.2714</code></pre>
-<pre class="r"><code>BIC(StateConsNonTarget)</code></pre>
-<pre><code>## [1] 316.8403</code></pre>
-<div id="conclusion" class="section level4">
-<h4>Conclusion:</h4>
-<blockquote>
-<p>Hypothesis 5 was supported: participants in the conscientiousness
-group experienced significant increases in state conscientiousness over
-the duration of the study (b = 0.08, 95% CI [0.01, 0.14], SE = 0.03, p
-&lt; .05). There was a medium-large effect for state conscientiousness
-for participants working on their conscientiousness (d = 0.61). However,
-those in the conscientiousness group also increased in state compassion
-(b = 0.07, 95% CI [0.03, 0.12], SE = 0.02, p &lt; .01) with a
-medium-sized effect (d = 0.48).</p>
-</blockquote>
+
+# with filtered data frame: separate string into artist and rest of string
+albums_df_197_separated &lt;- albums_df_197 %&gt;%
+  separate(titlesartistsyears, c(&quot;artist&quot;, &quot;rest&quot;), sep = &quot;: &quot;) %&gt;%
+  # separate rest of string into album and year
+  separate(rest, c(&quot;album&quot;, &quot;year&quot;), sep = &quot; \\(|\\)&quot;)</code></pre>
+<pre><code>## Warning: Expected 2 pieces. Additional pieces discarded in 3 rows [70, 97, 156].</code></pre>
+<pre><code>## Warning: Expected 2 pieces. Additional pieces discarded in 194 rows [1, 2, 3, 4,
+## 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, ...].</code></pre>
+<pre><code>## Warning: Expected 2 pieces. Missing pieces filled with `NA` in 3 rows [70, 97,
+## 156].</code></pre>
+<pre class="r"><code># remove leading/trailing spaces
+albums_df_197_separated &lt;- albums_df_197_separated %&gt;%
+  mutate(across(everything(), str_trim))
+
+# Now I need to add back in the 3 problematic strings.
+
+new_row &lt;- data.frame(artist = &quot;Huerco S.&quot;, album = &quot;For Those of You Who Have Never (and Also Those Who Have)&quot;, year = &quot;2016&quot;, rankings = &quot;190.&quot;)
+albums_df_198 &lt;- rbind(albums_df_197_separated, new_row)
+
+new_row &lt;- data.frame(artist = &quot;(Sandy) Alex G&quot;, album = &quot;DSU&quot;, year = &quot;2014&quot;, rankings = &quot;167.&quot;)
+albums_df_199 &lt;- rbind(albums_df_198, new_row)
+
+new_row &lt;- data.frame(artist = &quot;Jai Paul&quot;, album = &quot;Leak 04-13 (Bait Ones)&quot;, year = &quot;2019&quot;, rankings = &quot;95.&quot;)
+albums_df_200 &lt;- rbind(albums_df_199, new_row)
+
+albums_df_200</code></pre>
+<pre><code>## # A tibble: 200 × 4
+##    artist                   album                        year  rankings
+##    &lt;chr&gt;                    &lt;chr&gt;                        &lt;chr&gt; &lt;chr&gt;   
+##  1 Ratking                  So It Goes                   2014  200.    
+##  2 Wu Lyf                   Go Tell Fire to the Mountain 2011  199.    
+##  3 Jean Grae / Quelle Chris Everything’s Fine            2018  198.    
+##  4 Fatima Al Qadiri         Genre-Specific Xperience     2011  197.    
+##  5 Portal                   Vexovoid                     2013  196.    
+##  6 Downtown Boys            Full Communism               2015  195.    
+##  7 Titus Andronicus         The Monitor                  2010  194.    
+##  8 Lil Peep                 Hellboy                      2016  193.    
+##  9 Kelela                   Cut 4 Me                     2013  192.    
+## 10 Kate Bush                50 Words for Snow            2011  191.    
+## # … with 190 more rows</code></pre>
+<p>Now I need to make sure all of my variables have the right
+formatting</p>
+<pre class="r"><code># fixing the &quot;ranking&quot; variable
+
+albums_df_200 &lt;- albums_df_200 %&gt;%
+  mutate(ranking = as.numeric(sub(&quot;\\.$&quot;, &quot;&quot;, rankings)))
+
+albums_df_200 &lt;- albums_df_200 %&gt;%
+select(-rankings)
+
+# fixing the &quot;year&quot; variable so it is actually a year
+
+albums_df_200 &lt;- albums_df_200 %&gt;%
+  mutate(year = as.numeric(year))
+
+albums_df_200</code></pre>
+<pre><code>## # A tibble: 200 × 4
+##    artist                   album                         year ranking
+##    &lt;chr&gt;                    &lt;chr&gt;                        &lt;dbl&gt;   &lt;dbl&gt;
+##  1 Ratking                  So It Goes                    2014     200
+##  2 Wu Lyf                   Go Tell Fire to the Mountain  2011     199
+##  3 Jean Grae / Quelle Chris Everything’s Fine             2018     198
+##  4 Fatima Al Qadiri         Genre-Specific Xperience      2011     197
+##  5 Portal                   Vexovoid                      2013     196
+##  6 Downtown Boys            Full Communism                2015     195
+##  7 Titus Andronicus         The Monitor                   2010     194
+##  8 Lil Peep                 Hellboy                       2016     193
+##  9 Kelela                   Cut 4 Me                      2013     192
+## 10 Kate Bush                50 Words for Snow             2011     191
+## # … with 190 more rows</code></pre>
 </div>
-</div>
-<div id="hypothesis-6" class="section level3">
-<h3>Hypothesis 6</h3>
-<p>Hypothesis 6: I hypothesized that those in the
-<strong>compassion</strong> group will experience significant
-<strong><em>increases levels in state compassion</em></strong> over the
-duration of the study.</p>
-<p>Starting with an intercept only model:</p>
-<pre class="r"><code>StateCompNull &lt;- lmer(statecompassion ~ 1 +
-                (1 | id), 
-              data = CompState,
-              REML = FALSE,
-              na.action = &quot;na.omit&quot;)
+<div id="looking-at-the-data" class="section level3">
+<h3>Looking at the data</h3>
+<p>First, I think I want to create a new data frame that focuses on each
+discrete artist that has at least one album in the list. Specifically, I
+want to be able to look at average list ranking and number of albums in
+the list for each artist.</p>
+<pre class="r"><code>albums_by_artist &lt;- albums_df_200 %&gt;%
+  group_by(artist) %&gt;%
+  summarize(average_ranking = mean(ranking), 
+            albums_in_list = n()) </code></pre>
+<p>First I will sort this in ascending order by average ranking:</p>
+<pre class="r"><code>albums_by_artist_lowestavg &lt;- albums_by_artist %&gt;%
+   arrange(average_ranking)
 
-summary(StateCompNull)</code></pre>
-<pre><code>## Linear mixed model fit by maximum likelihood . t-tests use Satterthwaite&#39;s
-##   method [lmerModLmerTest]
-## Formula: statecompassion ~ 1 + (1 | id)
-##    Data: CompState
-## 
-##      AIC      BIC   logLik deviance df.resid 
-##    429.6    442.2   -211.8    423.6      476 
-## 
-## Scaled residuals: 
-##     Min      1Q  Median      3Q     Max 
-## -5.9073 -0.4584  0.1292  0.4944  2.9439 
-## 
-## Random effects:
-##  Groups   Name        Variance Std.Dev.
-##  id       (Intercept) 0.21805  0.4670  
-##  Residual             0.09076  0.3013  
-## Number of obs: 479, groups:  id, 87
-## 
-## Fixed effects:
-##             Estimate Std. Error       df t value Pr(&gt;|t|)    
-## (Intercept)  4.32078    0.05314 86.42390   81.31   &lt;2e-16 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code>confint(StateCompNull)</code></pre>
-<pre><code>##                 2.5 %    97.5 %
-## .sig01      0.3974891 0.5548772
-## .sigma      0.2813758 0.3236091
-## (Intercept) 4.2153144 4.4259659</code></pre>
-<pre class="r"><code>rand(StateCompNull)</code></pre>
-<pre><code>## ANOVA-like table for random-effects: Single term deletions
-## 
-## Model:
-## statecompassion ~ (1 | id)
-##          npar  logLik    AIC    LRT Df Pr(&gt;Chisq)    
-## &lt;none&gt;      3 -211.82 429.64                         
-## (1 | id)    2 -407.26 818.52 390.88  1  &lt; 2.2e-16 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code>AIC(StateCompNull)</code></pre>
-<pre><code>## [1] 429.6435</code></pre>
-<pre class="r"><code>BIC(StateCompNull)</code></pre>
-<pre><code>## [1] 442.1586</code></pre>
-<p>Then linear:</p>
-<pre class="r"><code>StateCompLin &lt;- lmer(statecompassion ~  StateLinearTime +
-                (1 + StateLinearTime | id), 
-              data = CompState,
-              REML = FALSE,
-              na.action = &quot;na.omit&quot;)
+albums_by_artist_lowestavg</code></pre>
+<pre><code>## # A tibble: 184 × 3
+##    artist                  average_ranking albums_in_list
+##    &lt;chr&gt;                             &lt;dbl&gt;          &lt;int&gt;
+##  1 Fiona Apple                         5                1
+##  2 Frank Ocean                         5.5              2
+##  3 Kanye West                          8.5              2
+##  4 D’Angelo &amp; the Vanguard             9                1
+##  5 Rihanna                            12                1
+##  6 Lorde                              14                1
+##  7 Joanna Newsom                      16                1
+##  8 Sufjan Stevens                     17                1
+##  9 Lana Del Rey                       19                1
+## 10 DJ Rashad                          20                1
+## # … with 174 more rows</code></pre>
+<p>Wow I feel so vindicated!! Fiona Apple is one of my all-time favorite
+artists and she has the lowest average album ranking! (That is just from
+one album, but still. That album is the best album of the 2010s,
+IMHO.)</p>
+<p>Now I will sort the dataset in descending order by number of albums
+in the list:</p>
+<pre class="r"><code>albums_by_artist_listnumber &lt;- albums_by_artist %&gt;%
+     arrange(desc(albums_in_list))
 
-summary(StateCompLin)</code></pre>
-<pre><code>## Linear mixed model fit by maximum likelihood . t-tests use Satterthwaite&#39;s
-##   method [lmerModLmerTest]
-## Formula: statecompassion ~ StateLinearTime + (1 + StateLinearTime | id)
-##    Data: CompState
-## 
-##      AIC      BIC   logLik deviance df.resid 
-##    381.9    406.9   -184.9    369.9      473 
-## 
-## Scaled residuals: 
-##     Min      1Q  Median      3Q     Max 
-## -6.5705 -0.4237  0.0452  0.4894  3.0030 
-## 
-## Random effects:
-##  Groups   Name            Variance Std.Dev. Corr
-##  id       (Intercept)     0.196035 0.44276      
-##           StateLinearTime 0.001015 0.03185  0.14
-##  Residual                 0.074735 0.27338      
-## Number of obs: 479, groups:  id, 87
-## 
-## Fixed effects:
-##                  Estimate Std. Error        df t value Pr(&gt;|t|)    
-## (Intercept)      4.184322   0.054067 83.090376  77.392  &lt; 2e-16 ***
-## StateLinearTime  0.039968   0.007045 56.197300   5.673 5.09e-07 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## Correlation of Fixed Effects:
-##             (Intr)
-## StateLinrTm -0.262</code></pre>
-<pre class="r"><code>confint(StateCompLin)</code></pre>
-<pre><code>##                       2.5 %     97.5 %
-## .sig01           0.36715270 0.53721646
-## .sig02          -0.31341191 0.76110084
-## .sig03           0.01498563 0.04830592
-## .sigma           0.25411042 0.29514629
-## (Intercept)      4.07680638 4.29134191
-## StateLinearTime  0.02607876 0.05428726</code></pre>
-<pre class="r"><code>rand(StateCompLin)</code></pre>
-<pre><code>## ANOVA-like table for random-effects: Single term deletions
-## 
-## Model:
-## statecompassion ~ StateLinearTime + (1 + StateLinearTime | id)
-##                                               npar  logLik    AIC    LRT Df
-## &lt;none&gt;                                           6 -184.93 381.85          
-## StateLinearTime in (1 + StateLinearTime | id)    4 -190.32 388.64 10.782  2
-##                                               Pr(&gt;Chisq)   
-## &lt;none&gt;                                                     
-## StateLinearTime in (1 + StateLinearTime | id)   0.004558 **
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code>AIC(StateCompLin)</code></pre>
-<pre><code>## [1] 381.8546</code></pre>
-<pre class="r"><code>BIC(StateCompLin)</code></pre>
-<pre><code>## [1] 406.8848</code></pre>
-<p>Then log:</p>
-<pre class="r"><code>StateCompLog &lt;- lmer(statecompassion ~  StateLogTime +
-                (1 + StateLogTime | id), 
-              data = CompState,
-              REML = FALSE,
-              na.action = &quot;na.omit&quot;)
-
-summary(StateCompLog)</code></pre>
-<pre><code>## Linear mixed model fit by maximum likelihood . t-tests use Satterthwaite&#39;s
-##   method [lmerModLmerTest]
-## Formula: statecompassion ~ StateLogTime + (1 + StateLogTime | id)
-##    Data: CompState
-## 
-##      AIC      BIC   logLik deviance df.resid 
-##    371.2    396.3   -179.6    359.2      473 
-## 
-## Scaled residuals: 
-##     Min      1Q  Median      3Q     Max 
-## -6.8453 -0.4236  0.0483  0.4807  3.0356 
-## 
-## Random effects:
-##  Groups   Name         Variance Std.Dev. Corr
-##  id       (Intercept)  0.18203  0.4267       
-##           StateLogTime 0.01024  0.1012   0.20
-##  Residual              0.07361  0.2713       
-## Number of obs: 479, groups:  id, 87
-## 
-## Fixed effects:
-##              Estimate Std. Error       df t value Pr(&gt;|t|)    
-## (Intercept)   4.11824    0.05514 80.83499  74.682  &lt; 2e-16 ***
-## StateLogTime  0.15573    0.02334 66.77502   6.671 5.92e-09 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## Correlation of Fixed Effects:
-##             (Intr)
-## StateLogTim -0.342</code></pre>
-<pre class="r"><code>confint(StateCompLog)</code></pre>
-<pre><code>##                    2.5 %    97.5 %
-## .sig01        0.34554271 0.5265997
-## .sig02       -0.29601768 1.0000000
-## .sig03        0.03090328 0.1585634
-## .sigma        0.25213067 0.2930221
-## (Intercept)   4.00851676 4.2273262
-## StateLogTime  0.10944308 0.2023040</code></pre>
-<pre class="r"><code>rand(StateCompLog)</code></pre>
-<pre><code>## ANOVA-like table for random-effects: Single term deletions
-## 
-## Model:
-## statecompassion ~ StateLogTime + (1 + StateLogTime | id)
-##                                         npar  logLik    AIC    LRT Df
-## &lt;none&gt;                                     6 -179.62 371.24          
-## StateLogTime in (1 + StateLogTime | id)    4 -184.21 376.43 9.1898  2
-##                                         Pr(&gt;Chisq)  
-## &lt;none&gt;                                              
-## StateLogTime in (1 + StateLogTime | id)     0.0101 *
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code>AIC(StateCompLog)</code></pre>
-<pre><code>## [1] 371.2372</code></pre>
-<pre class="r"><code>BIC(StateCompLog)</code></pre>
-<pre><code>## [1] 396.2674</code></pre>
-<p>(Log had the best fit again.)</p>
-<p>With the same covariate as before:</p>
-<pre class="r"><code>StateCompLogCo &lt;- lmer(statecompassion ~ pretestcons + StateLogTime +
-                (1 + StateLogTime | id), 
-              data = CompState,
-              REML = FALSE,
-              na.action = &quot;na.omit&quot;)
-
-summary(StateCompLogCo)</code></pre>
-<pre><code>## Linear mixed model fit by maximum likelihood . t-tests use Satterthwaite&#39;s
-##   method [lmerModLmerTest]
-## Formula: statecompassion ~ pretestcons + StateLogTime + (1 + StateLogTime |  
-##     id)
-##    Data: CompState
-## 
-##      AIC      BIC   logLik deviance df.resid 
-##    363.3    392.5   -174.6    349.3      472 
-## 
-## Scaled residuals: 
-##     Min      1Q  Median      3Q     Max 
-## -6.8826 -0.4282  0.0680  0.4713  3.0152 
-## 
-## Random effects:
-##  Groups   Name         Variance Std.Dev. Corr
-##  id       (Intercept)  0.16253  0.4031       
-##           StateLogTime 0.01050  0.1025   0.09
-##  Residual              0.07369  0.2715       
-## Number of obs: 479, groups:  id, 87
-## 
-## Fixed effects:
-##              Estimate Std. Error       df t value Pr(&gt;|t|)    
-## (Intercept)   2.77912    0.41017 90.47698   6.776 1.22e-09 ***
-## pretestcons   0.33843    0.10274 88.91553   3.294  0.00142 ** 
-## StateLogTime  0.15773    0.02348 66.40538   6.717 5.03e-09 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## Correlation of Fixed Effects:
-##             (Intr) prtstc
-## pretestcons -0.992       
-## StateLogTim -0.080  0.029</code></pre>
-<pre class="r"><code>confint(StateCompLogCo)</code></pre>
-<pre><code>##                    2.5 %    97.5 %
-## .sig01        0.32279028 0.5019608
-## .sig02       -0.37363270 1.0000000
-## .sig03        0.03066606 0.1602048
-## .sigma        0.25224113 0.2932004
-## (Intercept)   1.96336478 3.6011939
-## pretestcons   0.13238062 0.5428220
-## StateLogTime  0.11122319 0.2046937</code></pre>
-<pre class="r"><code>rand(StateCompLogCo)</code></pre>
-<pre><code>## ANOVA-like table for random-effects: Single term deletions
-## 
-## Model:
-## statecompassion ~ pretestcons + StateLogTime + (1 + StateLogTime | id)
-##                                         npar  logLik    AIC    LRT Df
-## &lt;none&gt;                                     7 -174.64 363.28          
-## StateLogTime in (1 + StateLogTime | id)    5 -178.56 367.11 7.8308  2
-##                                         Pr(&gt;Chisq)  
-## &lt;none&gt;                                              
-## StateLogTime in (1 + StateLogTime | id)    0.01993 *
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code>AIC(StateCompLogCo)</code></pre>
-<pre><code>## [1] 363.2813</code></pre>
-<pre class="r"><code>BIC(StateCompLogCo)</code></pre>
-<pre><code>## [1] 392.4832</code></pre>
-<p>Examining patterns in non-target trait at the state level:</p>
-<pre class="r"><code>StateCompNonTarget &lt;- lmer(stateconscientiousness ~  StateLogTime +
-                (1 + StateLogTime | id), 
-              data = CompState,
-              REML = FALSE,
-              na.action = &quot;na.omit&quot;)
-
-summary(StateCompNonTarget)</code></pre>
-<pre><code>## Linear mixed model fit by maximum likelihood . t-tests use Satterthwaite&#39;s
-##   method [lmerModLmerTest]
-## Formula: stateconscientiousness ~ StateLogTime + (1 + StateLogTime | id)
-##    Data: CompState
-## 
-##      AIC      BIC   logLik deviance df.resid 
-##    495.5    520.5   -241.7    483.5      473 
-## 
-## Scaled residuals: 
-##     Min      1Q  Median      3Q     Max 
-## -4.1042 -0.3418  0.0831  0.4297  2.6709 
-## 
-## Random effects:
-##  Groups   Name         Variance Std.Dev. Corr 
-##  id       (Intercept)  0.24149  0.4914        
-##           StateLogTime 0.01002  0.1001   -0.18
-##  Residual              0.09956  0.3155        
-## Number of obs: 479, groups:  id, 87
-## 
-## Fixed effects:
-##              Estimate Std. Error       df t value Pr(&gt;|t|)    
-## (Intercept)   4.08865    0.06390 77.81390  63.982   &lt;2e-16 ***
-## StateLogTime  0.02071    0.02613 56.24322   0.793    0.431    
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## Correlation of Fixed Effects:
-##             (Intr)
-## StateLogTim -0.501</code></pre>
-<pre class="r"><code>confint(StateCompNonTarget)</code></pre>
-<pre><code>##                    2.5 %     97.5 %
-## .sig01        0.39575514 0.60914877
-## .sig02       -1.00000000 1.00000000
-## .sig03        0.00000000 0.17344822
-## .sigma        0.29309850 0.34091093
-## (Intercept)   3.96092667 4.21479484
-## StateLogTime -0.03116436 0.07324576</code></pre>
-<pre class="r"><code>rand(StateCompNonTarget)</code></pre>
-<pre><code>## ANOVA-like table for random-effects: Single term deletions
-## 
-## Model:
-## stateconscientiousness ~ StateLogTime + (1 + StateLogTime | id)
-##                                         npar  logLik    AIC    LRT Df
-## &lt;none&gt;                                     6 -241.74 495.48          
-## StateLogTime in (1 + StateLogTime | id)    4 -242.97 493.93 2.4523  2
-##                                         Pr(&gt;Chisq)
-## &lt;none&gt;                                            
-## StateLogTime in (1 + StateLogTime | id)     0.2934</code></pre>
-<pre class="r"><code>AIC(StateCompNonTarget)</code></pre>
-<pre><code>## [1] 495.4786</code></pre>
-<pre class="r"><code>BIC(StateCompNonTarget)</code></pre>
-<pre><code>## [1] 520.5088</code></pre>
-<div id="conclusion-1" class="section level4">
-<h4>Conclusion:</h4>
-<blockquote>
-<p>Hypothesis 6 was also supported: those in the compassion group
-experienced significant increases in state compassion over the duration
-of the study (b = 0.16, 95% CI [0.11, 0.20], SE = 0.02, p &lt; .001).
-There was a large effect for state compassion for compassion group
-participants (d = 0.70). Those in the compassion group did not
-experience a significant increase in levels of state conscientiousness
-(b = 0.02, 95% CI [-0.02, 0.08], SE = 0.03, p = .37).</p>
-</blockquote>
-</div>
-</div>
-<div id="hypothesis-7" class="section level3">
-<h3>Hypothesis 7</h3>
-<p>I examined the intervention groups combined to detect Time x Group
-interaction effects at the state level.</p>
-<p>Hypothesis 7: I hypothesized that <strong>people who chose the
-conscientiousness intervention</strong> will show <strong><em>greater
-increases in state conscientiousness compared with the compassion
-group.</em></strong></p>
-<p>Testing the group by time (slope) interaction:</p>
-<p>Null first:</p>
-<pre class="r"><code>ConsInteractionNull &lt;- lmer(stateconscientiousness ~  1 +
-                (1 | id), 
-              data = VPCstate,
-              REML = FALSE,
-              na.action = &quot;na.omit&quot;)
-
-summary(ConsInteractionNull)</code></pre>
-<pre><code>## Linear mixed model fit by maximum likelihood . t-tests use Satterthwaite&#39;s
-##   method [lmerModLmerTest]
-## Formula: stateconscientiousness ~ 1 + (1 | id)
-##    Data: VPCstate
-## 
-##      AIC      BIC   logLik deviance df.resid 
-##   1173.2   1187.9   -583.6   1167.2     1004 
-## 
-## Scaled residuals: 
-##     Min      1Q  Median      3Q     Max 
-## -4.9151 -0.4200  0.1256  0.5160  2.4517 
-## 
-## Random effects:
-##  Groups   Name        Variance Std.Dev.
-##  id       (Intercept) 0.2748   0.5242  
-##  Residual             0.1216   0.3488  
-## Number of obs: 1007, groups:  id, 179
-## 
-## Fixed effects:
-##              Estimate Std. Error        df t value Pr(&gt;|t|)    
-## (Intercept)   3.98594    0.04178 178.22198   95.41   &lt;2e-16 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code>confint(ConsInteractionNull)</code></pre>
-<pre><code>##                 2.5 %    97.5 %
-## .sig01      0.4677237 0.5907762
-## .sigma      0.3326471 0.3662132
-## (Intercept) 3.9034242 4.0681105</code></pre>
-<pre class="r"><code>rand(ConsInteractionNull)</code></pre>
-<pre><code>## ANOVA-like table for random-effects: Single term deletions
-## 
-## Model:
-## stateconscientiousness ~ (1 | id)
-##          npar  logLik    AIC    LRT Df Pr(&gt;Chisq)    
-## &lt;none&gt;      3 -583.59 1173.2                         
-## (1 | id)    2 -961.67 1927.3 756.16  1  &lt; 2.2e-16 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code>AIC(ConsInteractionNull)</code></pre>
-<pre><code>## [1] 1173.187</code></pre>
-<pre class="r"><code>BIC(ConsInteractionNull)</code></pre>
-<pre><code>## [1] 1187.932</code></pre>
-<p>Then linear:</p>
-<pre class="r"><code>ConsInteractionLin &lt;- lmer(stateconscientiousness ~  StateLinearTime*intervention +
-                (1 + StateLinearTime | id), 
-              data = VPCstate,
-              REML = FALSE,
-              na.action = &quot;na.omit&quot;)
-
-summary(ConsInteractionLin)</code></pre>
-<pre><code>## Linear mixed model fit by maximum likelihood . t-tests use Satterthwaite&#39;s
-##   method [lmerModLmerTest]
-## Formula: stateconscientiousness ~ StateLinearTime * intervention + (1 +  
-##     StateLinearTime | id)
-##    Data: VPCstate
-## 
-##      AIC      BIC   logLik deviance df.resid 
-##   1141.7   1181.0   -562.8   1125.7      995 
-## 
-## Scaled residuals: 
-##     Min      1Q  Median      3Q     Max 
-## -4.8365 -0.3776  0.0938  0.4861  2.4608 
-## 
-## Random effects:
-##  Groups   Name            Variance Std.Dev. Corr 
-##  id       (Intercept)     0.247536 0.49753       
-##           StateLinearTime 0.001191 0.03451  -0.02
-##  Residual                 0.111392 0.33375       
-## Number of obs: 1003, groups:  id, 179
-## 
-## Fixed effects:
-##                                 Estimate Std. Error         df t value Pr(&gt;|t|)
-## (Intercept)                     4.089482   0.056142 197.587121  72.842  &lt; 2e-16
-## StateLinearTime                 0.003640   0.008142 105.653413   0.447 0.655743
-## intervention1                  -0.275104   0.069611 215.344891  -3.952 0.000105
-## StateLinearTime:intervention1   0.015320   0.011475 117.294258   1.335 0.184426
-##                                  
-## (Intercept)                   ***
-## StateLinearTime                  
-## intervention1                 ***
-## StateLinearTime:intervention1    
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## Correlation of Fixed Effects:
-##             (Intr) SttLnT intrv1
-## StateLinrTm -0.388              
-## interventn1 -0.636  0.325       
-## SttLnrTm:n1  0.310 -0.726 -0.505</code></pre>
-<pre class="r"><code>confint(ConsInteractionLin)</code></pre>
-<pre><code>##                                      2.5 %      97.5 %
-## .sig01                         0.433532680  0.57197497
-## .sig02                        -0.337289739  0.41849431
-## .sig03                         0.019098367  0.04865161
-## .sigma                         0.317129261  0.35184212
-## (Intercept)                    3.978545608  4.19996341
-## StateLinearTime               -0.012425883  0.01984710
-## intervention1                 -0.413005098 -0.13836031
-## StateLinearTime:intervention1 -0.007565212  0.03798502</code></pre>
-<pre class="r"><code>rand(ConsInteractionLin)</code></pre>
-<pre><code>## ANOVA-like table for random-effects: Single term deletions
-## 
-## Model:
-## stateconscientiousness ~ StateLinearTime + intervention + (1 + StateLinearTime | id) + StateLinearTime:intervention
-##                                               npar  logLik    AIC    LRT Df
-## &lt;none&gt;                                           8 -562.84 1141.7          
-## StateLinearTime in (1 + StateLinearTime | id)    6 -568.69 1149.4 11.691  2
-##                                               Pr(&gt;Chisq)   
-## &lt;none&gt;                                                     
-## StateLinearTime in (1 + StateLinearTime | id)   0.002892 **
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code>AIC(ConsInteractionLin)</code></pre>
-<pre><code>## [1] 1141.685</code></pre>
-<pre class="r"><code>BIC(ConsInteractionLin)</code></pre>
-<pre><code>## [1] 1180.971</code></pre>
-<p>Then log:</p>
-<pre class="r"><code>ConsInteractionLog &lt;- lmer(stateconscientiousness ~  StateLogTime*intervention +
-                (1 + StateLogTime | id), 
-              data = VPCstate,
-              REML = FALSE,
-              na.action = &quot;na.omit&quot;)
-
-summary(ConsInteractionLog)</code></pre>
-<pre><code>## Linear mixed model fit by maximum likelihood . t-tests use Satterthwaite&#39;s
-##   method [lmerModLmerTest]
-## Formula: 
-## stateconscientiousness ~ StateLogTime * intervention + (1 + StateLogTime |  
-##     id)
-##    Data: VPCstate
-## 
-##      AIC      BIC   logLik deviance df.resid 
-##   1138.0   1177.3   -561.0   1122.0      995 
-## 
-## Scaled residuals: 
-##     Min      1Q  Median      3Q     Max 
-## -5.0355 -0.3770  0.1035  0.4865  2.5486 
-## 
-## Random effects:
-##  Groups   Name         Variance Std.Dev. Corr 
-##  id       (Intercept)  0.27113  0.5207        
-##           StateLogTime 0.01883  0.1372   -0.23
-##  Residual              0.10934  0.3307        
-## Number of obs: 1003, groups:  id, 179
-## 
-## Fixed effects:
-##                             Estimate Std. Error        df t value Pr(&gt;|t|)    
-## (Intercept)                  4.08281    0.06267 173.72767  65.147  &lt; 2e-16 ***
-## StateLogTime                 0.01906    0.02935 128.34030   0.649 0.517352    
-## intervention1               -0.30877    0.08037 170.14780  -3.842 0.000172 ***
-## StateLogTime:intervention1   0.05816    0.04137 138.02837   1.406 0.161990    
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## Correlation of Fixed Effects:
-##             (Intr) SttLgT intrv1
-## StateLogTim -0.558              
-## interventn1 -0.650  0.445       
-## SttLgTm:nt1  0.424 -0.723 -0.662</code></pre>
-<pre class="r"><code>confint(ConsInteractionLog)</code></pre>
-<pre><code>##                                  2.5 %      97.5 %
-## .sig01                      0.44801966  0.60494980
-## .sig02                     -0.48799585  0.12592196
-## .sig03                      0.08597564  0.18586746
-## .sigma                      0.31413151  0.34868101
-## (Intercept)                 3.95897472  4.20639945
-## StateLogTime               -0.03879282  0.07728107
-## intervention1              -0.46843567 -0.15093837
-## StateLogTime:intervention1 -0.02391623  0.13974365</code></pre>
-<pre class="r"><code>rand(ConsInteractionLog)</code></pre>
-<pre><code>## ANOVA-like table for random-effects: Single term deletions
-## 
-## Model:
-## stateconscientiousness ~ StateLogTime + intervention + (1 + StateLogTime | id) + StateLogTime:intervention
-##                                         npar  logLik    AIC    LRT Df
-## &lt;none&gt;                                     8 -561.00 1138.0          
-## StateLogTime in (1 + StateLogTime | id)    6 -567.87 1147.7 13.736  2
-##                                         Pr(&gt;Chisq)   
-## &lt;none&gt;                                               
-## StateLogTime in (1 + StateLogTime | id)   0.001041 **
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code>AIC(ConsInteractionLog)</code></pre>
-<pre><code>## [1] 1138.009</code></pre>
-<pre class="r"><code>BIC(ConsInteractionLog)</code></pre>
-<pre><code>## [1] 1177.295</code></pre>
-<p>Then adding pretest conscientiousness covariate:</p>
-<pre class="r"><code>ConsInteractionCo &lt;- lmer(stateconscientiousness ~ pretestcons + StateLogTime*intervention +
-                (1 + StateLogTime | id), 
-              data = VPCstate,
-              REML = FALSE,
-              na.action = &quot;na.omit&quot;)
-
-summary(ConsInteractionCo)</code></pre>
-<pre><code>## Linear mixed model fit by maximum likelihood . t-tests use Satterthwaite&#39;s
-##   method [lmerModLmerTest]
-## Formula: stateconscientiousness ~ pretestcons + StateLogTime * intervention +  
-##     (1 + StateLogTime | id)
-##    Data: VPCstate
-## 
-##      AIC      BIC   logLik deviance df.resid 
-##   1058.5   1102.7   -520.2   1040.5      994 
-## 
-## Scaled residuals: 
-##     Min      1Q  Median      3Q     Max 
-## -5.1025 -0.4161  0.0974  0.5145  2.5757 
-## 
-## Random effects:
-##  Groups   Name         Variance Std.Dev. Corr 
-##  id       (Intercept)  0.12448  0.3528        
-##           StateLogTime 0.01765  0.1329   -0.02
-##  Residual              0.11048  0.3324        
-## Number of obs: 1003, groups:  id, 179
-## 
-## Fixed effects:
-##                             Estimate Std. Error        df t value Pr(&gt;|t|)    
-## (Intercept)                  1.77444    0.22569 205.14603   7.862  2.1e-13 ***
-## pretestcons                  0.59490    0.05642 183.76762  10.544  &lt; 2e-16 ***
-## StateLogTime                 0.02473    0.02875 133.66734   0.860    0.391    
-## intervention1               -0.09643    0.07125 165.05376  -1.353    0.178    
-## StateLogTime:intervention1   0.02973    0.04020 145.48195   0.739    0.461    
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## Correlation of Fixed Effects:
-##             (Intr) prtstc SttLgT intrv1
-## pretestcons -0.974                     
-## StateLogTim -0.160  0.035              
-## interventn1 -0.420  0.281  0.429       
-## SttLgTm:nt1  0.162 -0.066 -0.724 -0.642</code></pre>
-<pre class="r"><code>confint(ConsInteractionCo)</code></pre>
-<pre><code>##                                  2.5 %     97.5 %
-## .sig01                      0.28607179 0.42744872
-## .sig02                     -0.35809076 0.54919893
-## .sig03                      0.07988513 0.18205085
-## .sigma                      0.31571989 0.35052510
-## (Intercept)                 1.32290979 2.23187013
-## pretestcons                 0.48077590 0.70779365
-## StateLogTime               -0.03192500 0.08219075
-## intervention1              -0.24266546 0.04629154
-## StateLogTime:intervention1 -0.05217747 0.11025398</code></pre>
-<pre class="r"><code>rand(ConsInteractionCo)</code></pre>
-<pre><code>## ANOVA-like table for random-effects: Single term deletions
-## 
-## Model:
-## stateconscientiousness ~ pretestcons + StateLogTime + intervention + (1 + StateLogTime | id) + StateLogTime:intervention
-##                                         npar  logLik    AIC  LRT Df Pr(&gt;Chisq)
-## &lt;none&gt;                                     9 -520.24 1058.5                   
-## StateLogTime in (1 + StateLogTime | id)    7 -530.04 1074.1 19.6  2  5.545e-05
-##                                            
-## &lt;none&gt;                                     
-## StateLogTime in (1 + StateLogTime | id) ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code>AIC(ConsInteractionCo)</code></pre>
-<pre><code>## [1] 1058.486</code></pre>
-<pre class="r"><code>BIC(ConsInteractionCo)</code></pre>
-<pre><code>## [1] 1102.682</code></pre>
-<div id="conclusion-2" class="section level4">
-<h4>Conclusion:</h4>
-<blockquote>
-<p>Hypothesis 7 was not fully supported: although participants in the
-conscientiousness group experienced greater increases in state
-conscientiousness than the compassion group’s increases in state
-conscientiousness (b = 0.06, 95% CI [-0.03, 0.14], SE = 0.04), this
-effect was not significant (p = .09). Although nonsignificant, the
-conscientiousness group experienced a 0.08 unit change in state
-conscientiousness in the expected direction, while the compassion group
-did not experience a significant increase in state conscientiousness (b
-= 0.02, p = .46).he logarithmic slope by group interactions still held
-when controlling for pretest levels of trait conscientiousness.</p>
-</blockquote>
-</div>
-</div>
-<div id="hypothesis-8" class="section level3">
-<h3>Hypothesis 8</h3>
-<p>Hypothesis 8: I hypothesized that <strong>people who chose the
-compassion intervention</strong> will show <strong><em>greater increases
-in state compassion compared with the conscientiousness
-group.</em></strong></p>
-<p>Testing the group by time (slope) interaction:</p>
-<pre class="r"><code>CompInteractionNull &lt;- lmer(statecompassion ~  1 +
-                (1 | id), 
-              data = VPCstate,
-              REML = FALSE,
-              na.action = &quot;na.omit&quot;)
-
-summary(CompInteractionNull)</code></pre>
-<pre><code>## Linear mixed model fit by maximum likelihood . t-tests use Satterthwaite&#39;s
-##   method [lmerModLmerTest]
-## Formula: statecompassion ~ 1 + (1 | id)
-##    Data: VPCstate
-## 
-##      AIC      BIC   logLik deviance df.resid 
-##    739.9    754.6   -366.9    733.9     1004 
-## 
-## Scaled residuals: 
-##     Min      1Q  Median      3Q     Max 
-## -6.4794 -0.3780  0.0857  0.4658  3.2275 
-## 
-## Random effects:
-##  Groups   Name        Variance Std.Dev.
-##  id       (Intercept) 0.2257   0.4751  
-##  Residual             0.0757   0.2751  
-## Number of obs: 1007, groups:  id, 179
-## 
-## Fixed effects:
-##              Estimate Std. Error        df t value Pr(&gt;|t|)    
-## (Intercept)   4.41409    0.03735 178.75854   118.2   &lt;2e-16 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code>confint(CompInteractionNull)</code></pre>
-<pre><code>##                 2.5 %    97.5 %
-## .sig01      0.4251899 0.5339893
-## .sigma      0.2624088 0.2889048
-## (Intercept) 4.3404554 4.4876440</code></pre>
-<pre class="r"><code>rand(CompInteractionNull)</code></pre>
-<pre><code>## ANOVA-like table for random-effects: Single term deletions
-## 
-## Model:
-## statecompassion ~ (1 | id)
-##          npar  logLik     AIC    LRT Df Pr(&gt;Chisq)    
-## &lt;none&gt;      3 -366.94  739.88                         
-## (1 | id)    2 -847.16 1698.33 960.45  1  &lt; 2.2e-16 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code>AIC(CompInteractionNull)</code></pre>
-<pre><code>## [1] 739.8814</code></pre>
-<pre class="r"><code>BIC(CompInteractionNull)</code></pre>
-<pre><code>## [1] 754.6256</code></pre>
-<p>Testing a linear model:</p>
-<pre class="r"><code>CompInteractionLin &lt;- lmer(statecompassion ~  StateLinearTime*intervention +
-                (1 + StateLinearTime | id), 
-              data = VPCstate,
-              REML = FALSE,
-              na.action = &quot;na.omit&quot;)
-
-summary(CompInteractionLin)</code></pre>
-<pre><code>## Linear mixed model fit by maximum likelihood . t-tests use Satterthwaite&#39;s
-##   method [lmerModLmerTest]
-## Formula: 
-## statecompassion ~ StateLinearTime * intervention + (1 + StateLinearTime |  
-##     id)
-##    Data: VPCstate
-## 
-##      AIC      BIC   logLik deviance df.resid 
-##    666.0    705.2   -325.0    650.0      995 
-## 
-## Scaled residuals: 
-##     Min      1Q  Median      3Q     Max 
-## -7.0734 -0.3817  0.0660  0.4489  3.2337 
-## 
-## Random effects:
-##  Groups   Name            Variance Std.Dev. Corr
-##  id       (Intercept)     0.204088 0.45176      
-##           StateLinearTime 0.001015 0.03186  0.03
-##  Residual                 0.064220 0.25342      
-## Number of obs: 1003, groups:  id, 179
-## 
-## Fixed effects:
-##                                 Estimate Std. Error         df t value Pr(&gt;|t|)
-## (Intercept)                     4.233361   0.048076 212.054667  88.056  &lt; 2e-16
-## StateLinearTime                 0.037785   0.006666 112.783941   5.669 1.12e-07
-## intervention1                   0.160796   0.057386 236.296153   2.802   0.0055
-## StateLinearTime:intervention1  -0.021851   0.009346 124.384641  -2.338   0.0210
-##                                  
-## (Intercept)                   ***
-## StateLinearTime               ***
-## intervention1                 ** 
-## StateLinearTime:intervention1 *  
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## Correlation of Fixed Effects:
-##             (Intr) SttLnT intrv1
-## StateLinrTm -0.330              
-## interventn1 -0.614  0.297       
-## SttLnrTm:n1  0.277 -0.727 -0.470</code></pre>
-<pre class="r"><code>confint(CompInteractionLin)</code></pre>
-<pre><code>##                                     2.5 %       97.5 %
-## .sig01                         0.39756044  0.515261809
-## .sig02                        -0.25835187  0.365472989
-## .sig03                         0.02174948  0.042310513
-## .sigma                         0.24078043  0.267162177
-## (Intercept)                    4.13839935  4.328836935
-## StateLinearTime                0.02464416  0.051064318
-## intervention1                  0.04601684  0.274943109
-## StateLinearTime:intervention1 -0.04041467 -0.003135023</code></pre>
-<pre class="r"><code>rand(CompInteractionLin)</code></pre>
-<pre><code>## ANOVA-like table for random-effects: Single term deletions
-## 
-## Model:
-## statecompassion ~ StateLinearTime + intervention + (1 + StateLinearTime | id) + StateLinearTime:intervention
-##                                               npar  logLik    AIC    LRT Df
-## &lt;none&gt;                                           8 -324.98 665.96          
-## StateLinearTime in (1 + StateLinearTime | id)    6 -336.77 685.55 23.585  2
-##                                               Pr(&gt;Chisq)    
-## &lt;none&gt;                                                      
-## StateLinearTime in (1 + StateLinearTime | id)  7.563e-06 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code>AIC(CompInteractionLin)</code></pre>
-<pre><code>## [1] 665.9629</code></pre>
-<pre class="r"><code>BIC(CompInteractionLin)</code></pre>
-<pre><code>## [1] 705.2489</code></pre>
-<p>Testing a logarithmic model:</p>
-<pre class="r"><code>CompInteractionLog &lt;- lmer(statecompassion ~  StateLogTime*intervention +
-                (1 + StateLogTime | id), 
-              data = VPCstate,
-              REML = FALSE,
-              na.action = &quot;na.omit&quot;)
-
-summary(CompInteractionLog)</code></pre>
-<pre><code>## Linear mixed model fit by maximum likelihood . t-tests use Satterthwaite&#39;s
-##   method [lmerModLmerTest]
-## Formula: statecompassion ~ StateLogTime * intervention + (1 + StateLogTime |  
-##     id)
-##    Data: VPCstate
-## 
-##      AIC      BIC   logLik deviance df.resid 
-##    649.1    688.4   -316.6    633.1      995 
-## 
-## Scaled residuals: 
-##     Min      1Q  Median      3Q     Max 
-## -7.4487 -0.3911  0.0668  0.4395  3.2523 
-## 
-## Random effects:
-##  Groups   Name         Variance Std.Dev. Corr
-##  id       (Intercept)  0.19435  0.4409       
-##           StateLogTime 0.01350  0.1162   0.01
-##  Residual              0.06274  0.2505       
-## Number of obs: 1003, groups:  id, 179
-## 
-## Fixed effects:
-##                             Estimate Std. Error        df t value Pr(&gt;|t|)    
-## (Intercept)                  4.16653    0.05012 187.56663  83.138  &lt; 2e-16 ***
-## StateLogTime                 0.14906    0.02306 133.59934   6.465 1.75e-09 ***
-## intervention1                0.20615    0.06207 176.69698   3.321  0.00109 ** 
-## StateLogTime:intervention1  -0.08964    0.03222 142.98926  -2.782  0.00614 ** 
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## Correlation of Fixed Effects:
-##             (Intr) SttLgT intrv1
-## StateLogTim -0.445              
-## interventn1 -0.629  0.395       
-## SttLgTm:nt1  0.371 -0.722 -0.600</code></pre>
-<pre class="r"><code>confint(CompInteractionLog)</code></pre>
-<pre><code>##                                  2.5 %     97.5 %
-## .sig01                      0.38315727  0.5081045
-## .sig02                     -0.27067572  0.3632602
-## .sig03                      0.07978638  0.1528153
-## .sigma                      0.23790951  0.2641601
-## (Intercept)                 4.06740889  4.2659466
-## StateLogTime                0.10350430  0.1946530
-## intervention1               0.08202853  0.3300072
-## StateLogTime:intervention1 -0.15336275 -0.0252789</code></pre>
-<pre class="r"><code>rand(CompInteractionLog)</code></pre>
-<pre><code>## ANOVA-like table for random-effects: Single term deletions
-## 
-## Model:
-## statecompassion ~ StateLogTime + intervention + (1 + StateLogTime | id) + StateLogTime:intervention
-##                                         npar  logLik    AIC    LRT Df
-## &lt;none&gt;                                     8 -316.56 649.12          
-## StateLogTime in (1 + StateLogTime | id)    6 -329.26 670.52 25.402  2
-##                                         Pr(&gt;Chisq)    
-## &lt;none&gt;                                                
-## StateLogTime in (1 + StateLogTime | id)  3.048e-06 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code>AIC(CompInteractionLog)</code></pre>
-<pre><code>## [1] 649.1193</code></pre>
-<pre class="r"><code>BIC(CompInteractionLog)</code></pre>
-<pre><code>## [1] 688.4053</code></pre>
-<p>Adding the conscientiousness covariate:</p>
-<pre class="r"><code>CompInteractionCo &lt;- lmer(statecompassion ~ pretestcons + StateLogTime*intervention +
-                (1 + StateLogTime | id), 
-              data = VPCstate,
-              REML = FALSE,
-              na.action = &quot;na.omit&quot;)
-
-summary(CompInteractionCo)</code></pre>
-<pre><code>## Linear mixed model fit by maximum likelihood . t-tests use Satterthwaite&#39;s
-##   method [lmerModLmerTest]
-## Formula: statecompassion ~ pretestcons + StateLogTime * intervention +  
-##     (1 + StateLogTime | id)
-##    Data: VPCstate
-## 
-##      AIC      BIC   logLik deviance df.resid 
-##    645.9    690.1   -313.9    627.9      994 
-## 
-## Scaled residuals: 
-##     Min      1Q  Median      3Q     Max 
-## -7.4699 -0.3706  0.0608  0.4461  3.2374 
-## 
-## Random effects:
-##  Groups   Name         Variance Std.Dev. Corr
-##  id       (Intercept)  0.18473  0.4298       
-##           StateLogTime 0.01398  0.1182   0.02
-##  Residual              0.06274  0.2505       
-## Number of obs: 1003, groups:  id, 179
-## 
-## Fixed effects:
-##                             Estimate Std. Error        df t value Pr(&gt;|t|)    
-## (Intercept)                  3.60860    0.24479 208.31811  14.742  &lt; 2e-16 ***
-## pretestcons                  0.14463    0.06232 188.34332   2.321 0.021364 *  
-## StateLogTime                 0.15129    0.02321 133.08258   6.517 1.36e-09 ***
-## intervention1                0.24666    0.06375 194.19424   3.869 0.000149 ***
-## StateLogTime:intervention1  -0.09519    0.03246 143.11030  -2.933 0.003915 ** 
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## Correlation of Fixed Effects:
-##             (Intr) prtstc SttLgT intrv1
-## pretestcons -0.979                     
-## StateLogTim -0.130  0.040              
-## interventn1 -0.370  0.251  0.393       
-## SttLgTm:nt1  0.142 -0.068 -0.722 -0.598</code></pre>
-<pre class="r"><code>confint(CompInteractionCo)</code></pre>
-<pre><code>##                                  2.5 %      97.5 %
-## .sig01                      0.37246742  0.49662232
-## .sig02                     -0.26877027  0.36280695
-## .sig03                      0.08192856  0.15507047
-## .sigma                      0.23790048  0.26415659
-## (Intercept)                 3.12642828  4.09562799
-## pretestcons                 0.02095436  0.26723038
-## StateLogTime                0.10536675  0.19735811
-## intervention1               0.11770208  0.37553214
-## StateLogTime:intervention1 -0.15982199 -0.03012709</code></pre>
-<pre class="r"><code>rand(CompInteractionCo)</code></pre>
-<pre><code>## ANOVA-like table for random-effects: Single term deletions
-## 
-## Model:
-## statecompassion ~ pretestcons + StateLogTime + intervention + (1 + StateLogTime | id) + StateLogTime:intervention
-##                                         npar  logLik    AIC    LRT Df
-## &lt;none&gt;                                     9 -313.95 645.89          
-## StateLogTime in (1 + StateLogTime | id)    7 -327.25 668.50 26.609  2
-##                                         Pr(&gt;Chisq)    
-## &lt;none&gt;                                                
-## StateLogTime in (1 + StateLogTime | id)  1.667e-06 ***
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
-<pre class="r"><code>AIC(CompInteractionCo)</code></pre>
-<pre><code>## [1] 645.8927</code></pre>
-<pre class="r"><code>BIC(CompInteractionCo)</code></pre>
-<pre><code>## [1] 690.0894</code></pre>
-<div id="conclusion-3" class="section level4">
-<h4>Conclusion:</h4>
-<blockquote>
-<p>Hypothesis 8 was supported: the logarithmic slope by group effect for
-state compassion (b = -0.09, 95% CI [-0.15, -0.02], SE = 0.03, p &lt;
-.01) was significant. The compassion group experienced a significant
-0.15 unit increase in state-level compassion (p &lt; .001), while the
-conscientiousness group experienced a smaller 0.06 (0.15 – 0.09) unit
-increase in state compassion (p &lt; .01). The logarithmic slope by
-group interactions still held when controlling for pretest levels of
-trait conscientiousness.</p>
-</blockquote>
+albums_by_artist_listnumber</code></pre>
+<pre><code>## # A tibble: 184 × 3
+##    artist         average_ranking albums_in_list
+##    &lt;chr&gt;                    &lt;dbl&gt;          &lt;int&gt;
+##  1 Beyoncé                   25                3
+##  2 Kendrick Lamar            26.3              3
+##  3 Bon Iver                  61.5              2
+##  4 Drake                     41                2
+##  5 Frank Ocean                5.5              2
+##  6 Grimes                    30.5              2
+##  7 Kanye West                 8.5              2
+##  8 Mitski                    47                2
+##  9 Robyn                     39.5              2
+## 10 Solange                   43.5              2
+## # … with 174 more rows</code></pre>
+<p>Looks like Beyoncé and Kendrick Lamar are the only artists with 3
+albums in the top 200. That checks.</p>
 </div>
 </div>
 
