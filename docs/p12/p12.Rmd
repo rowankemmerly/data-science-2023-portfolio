@@ -1,35 +1,295 @@
 ---
-title: "Lab 08 - University of Edinburgh Art Collection"
-author: "Rowan Kemmerly"
-date: "5/3/2023"
-output: github_document
+title: "Portfolio 12: Webscraping Pitchfork"
+
 ---
 
-(I tried to put all of my edited code back in here so it's all in one place, but with up to Exercise 9 or so commented out. I still first made the changes within the original R scripts, though.)
+For this portfolio, I decided to scrape Pitchfork (a music review website) to be able to work with data on what reviewers on the site have ranked the top 200 albums of the 2000s and the top 200 albums of the 2010s. I'll be scraping the 2010s list first because it's all on one page (the 2000s list is broken up into 10 pages).
 
-### Load packages and data
+
+
+
+### Load packages, checking permissions
 
 ```{r load-packages, message = FALSE}
 library(tidyverse) 
 library(skimr)
+library(rvest)
+library(robotstxt)
+library(xml2)
 ```
 
-```{r load-data, message = FALSE, eval = TRUE}
-# Remove eval = FALSE or set it to TRUE once data is ready to be loaded
-uoe_art <- read_csv("data/uoe-art.csv")
+<!-- ```{r load-data, message = FALSE, eval = TRUE} -->
+<!-- # Remove eval = FALSE or set it to TRUE once data is ready to be loaded -->
+<!-- uoe_art <- read_csv("data/uoe-art.csv") -->
+<!-- ``` -->
+
+
+```{r checking-permissions}
+paths_allowed("https://pitchfork.com/features/lists-and-guides/")
 ```
 
-### Exercise 1
 
-The actual link has "https://collections.ed.ac.uk/art" before the"/record" part, so I've fixed the URLs via str_replace to reflect that. 
 
-```{r scrape-links}
-# links <- page %>%
-#   html_nodes(".iteminfo") %>%
-#   html_node("h3 a") %>%
-#   html_attr("href") %>%
-#   str_replace("\\.", "https://collections.ed.ac.uk/art")
+## Top 200 Albums of the 2010s
+
+
+```{r scrape-2010s}
+# 
+# # set url
+# url_2010s <- "https://pitchfork.com/features/lists-and-guides/the-200-best-albums-of-the-2010s/"
+# 
+# # read first page
+# page <- read_html(url_2010s)
+# 
+# # scrape album titles and artist names
+# 
+# titlesartistsyears <- page %>%
+#   html_node(".body__inner-container") %>%
+#   html_node("h2")
+# 
+#   
+#   #html_nodes(".GkhXA") %>%
+# 
+# # check that album titles and artist names were scraped correctly
+# titlesartistsyears
+# 
+# # scrape rankings
+# rankings <- page %>%
+#   html_node(".body__inner-container") %>%
+#   html_node(".heading-h3")
+#   
+#   
+# # check that rankings were scraped correctly
+# rankings
+# 
+# 
+# # put together in a data frame
+# top_200_2010s <- tibble(
+#   titles_artists = titlesartistsyears,
+#   rankings = rankings
+# )
+
+
+library(rvest)
+library(tidyverse)
+
+url <- "https://pitchfork.com/features/lists-and-guides/the-200-best-albums-of-the-2010s/"
+page <- read_html(url)
+
+titlesartistsyears <- page %>% html_nodes("h2") %>% html_text()
+rankings <- page %>% html_nodes(".heading-h3") %>% html_text()
+
+albums_df <- tibble(titlesartistsyears = titlesartistsyears, rankings = rankings)
+
+
 ```
+
+Now I'm going to work on cleaning up the data I've scraped.
+
+
+```{r clean-strings}
+# # Separate the string into three variables
+# separated_titlesartistsyears <- titlesartistsyears %>%
+#   str_extract_all("[^:()]+") %>%
+#   unlist() %>%
+#   trimws() %>%
+#   as_tibble() %>%
+#   separate(value, c("artist", "album_name", "year"), sep = " \\(|\\):")
+# 
+# # View the output
+# separated_titlesartistsyears
+
+
+
+
+albums_df_separated <- albums_df %>%
+  separate(titlesartistsyears, c("artist", "album", "year"), sep = " : |\\(|\\)")
+
+
+library(stringr)
+library(tidyr)
+# 
+# # Create a sample HTML string
+# html_string <- '<h2><a href="/reviews/albums/tyler-the-creator-igor/"><span class="title">Tyler, the Creator:</span> <em>Igor</em> <span class="pubdate">(2019)</span></a></h2>'
+# 
+# # Extract the text from the HTML string
+# text_string <- str_extract_all(html_string, "\\b\\w.*?\\b")
+# 
+# # Separate the text into variables
+# separated_string <- text_string %>%
+#   as_tibble() %>%
+#   separate(value, c("artist", "album", "year"), sep = " : |\\(|\\)")
+# 
+# # View the output
+# separated_string
+
+library(stringr)
+library(tidyr)
+
+# # Example data frame with a column "title"
+# df <- data.frame(title = c("Huerco S.: For Those of You Who Have Never (and Also Those Who Have) (2016)", 
+#                            "(Sandy) Alex G: DSU (2014)", 
+#                            "Jai Paul: Leak 04-13 (Bait Ones) (2019)"))
+# 
+# # Separate the "title" column into variables
+# df_separated <- df %>%
+#   separate(title, c("artist", "album", "year"), sep = " : |(?<=\\))\\s(?=\\()", extra = "merge")
+# 
+# # Extract the year from the album field if necessary
+# df_separated$year <- ifelse(is.na(df_separated$year), str_extract(df_separated$album, "\\(\\d{4}\\)"), df_separated$year)
+# 
+# # Remove the parentheses from the album and year fields
+# df_separated$album <- str_remove_all(df_separated$album, "\\(|\\)")
+# df_separated$year <- str_remove_all(df_separated$year, "\\(|\\)")
+# 
+# # View the output
+# df_separated
+# 
+
+
+# library(dplyr)
+# 
+# #example data frame with the album titles
+# problematic_a <- data.frame(title = c("Kendrick Lamar: To Pimp a Butterfly (2015)",
+#                                   "Frank Ocean: Channel Orange (2012)",
+#                                   "Huerco S.: For Those of You Who Have Never (and Also Those Who Have) (2016)",
+#                                   "(Sandy) Alex G: DSU (2014)",
+#                                   "Jai Paul: Leak 04-13 (Bait Ones) (2019)",
+#                                   "Kanye West: My Beautiful Dark Twisted Fantasy (2010)"))
+# 
+# # add problematic strings manually
+# problematic_strings <- data.frame(titlesartistsyears = c("Huerco S.: For Those of You Who Have Never (and Also Those Who Have) (2016)", 
+#                                             "(Sandy) Alex G: DSU (2014)",
+#                                             "Jai Paul: Leak 04-13 (Bait Ones) (2019)"))
+# 
+# # filter out problematic strings
+# filtered_albums_df <- albums_df %>%
+#   filter(!grepl(":.*\\(.*\\)", title)) 
+# 
+# # separate title into artist, album, and year columns
+# separated_df <- filtered_df %>%
+#   separate(title, c("artist", "album", "year"), sep = ": | \\(", extra = "merge")
+# 
+# # add problematic strings manually
+# problematic_strings <- data.frame(title = c("Huerco S.: For Those of You Who Have Never (and Also Those Who Have) (2016)", 
+#                                             "(Sandy) Alex G: DSU (2014)",
+#                                             "Jai Paul: Leak 04-13 (Bait Ones) (2019)"))
+# manually_added_df <- problematic_strings %>%
+#   mutate(artist = c("Huerco S.", "(Sandy) Alex G", "Jai Paul"),
+#          album = c("For Those of You Who Have Never (and Also Those Who Have)", "DSU", "Leak 04-13 (Bait Ones)"),
+#          year = c("2016", "2014", "2019"))
+# 
+# # combine data frames
+# final_df <- rbind(separated_df, manually_added_df)
+
+
+library(dplyr)
+
+# example data frame with the album titles
+albums_df <- data.frame(title = c("Kendrick Lamar: To Pimp a Butterfly (2015)",
+                                  "Frank Ocean: Channel Orange (2012)",
+                                  "Huerco S.: For Those of You Who Have Never (and Also Those Who Have) (2016)",
+                                  "(Sandy) Alex G: DSU (2014)",
+                                  "Jai Paul: Leak 04-13 (Bait Ones) (2019)",
+                                  "Kanye West: My Beautiful Dark Twisted Fantasy (2010)"))
+
+# filter out problematic strings
+filtered_df <- albums_df %>%
+  filter(!grepl(":.*\\(.*\\)", title)) 
+
+# separate title into artist, album, and year columns
+separated_df <- filtered_df %>%
+  separate(title, c("artist", "album", "year"), sep = ": | \\(", extra = "merge")
+
+# add problematic strings manually
+problematic_strings <- data.frame(title = c("Huerco S.: For Those of You Who Have Never (and Also Those Who Have) (2016)", 
+                                            "(Sandy) Alex G: DSU (2014)",
+                                            "Jai Paul: Leak 04-13 (Bait Ones) (2019)"))
+
+
+new_row <- data.frame(artist = "Huerco S.", album = "For Those of You Who Have Never (and Also Those Who Have)", year = "2016")
+album_df <- rbind(album_df, new_row)
+
+
+# combine data frames
+final_df <- rbind(separated_df, manually_added_df)
+
+
+# 
+# # Separate the "title" column into variables
+# albums_df_separated <- albums_df %>%
+#   separate(titlesartistsyears, c("artist", "album", "year"), sep = " : (?=[^(]*\\))|\\(|\\)")
+
+
+
+```
+
+
+
+```{r clean-strings-new}
+
+
+# filter out rows 11, 34, and 106: these are problematic strings that are messing up my string separation because they have extra parentheses
+
+albums_df_197 <- albums_df %>%
+  filter(!row_number() %in% c(11, 34, 106))
+
+
+# albums_df_197_separated <- albums_df_197 %>%
+#   separate(titlesartistsyears, c("artist", "album", "year"), sep = " : |\\(|\\)")
+
+
+# separate string into artist and rest of string
+albums_df_197_separated <- albums_df_197 %>%
+  separate(titlesartistsyears, c("artist", "rest"), sep = ": ") %>%
+  # separate rest of string into album and year
+  separate(rest, c("album", "year"), sep = " \\(|\\)")
+
+# remove leading/trailing spaces
+albums_df_197_separated <- albums_df_197_separated %>%
+  mutate(across(everything(), str_trim))
+
+
+```
+
+
+
+```{r scrape-2010s-new-bad}
+# set url
+url_2010s <- "https://pitchfork.com/features/lists-and-guides/the-200-best-albums-of-the-2010s/"
+
+# read first page
+page <- read_html(url_2010s)
+
+# check that the page was successfully read
+page
+
+# scrape album titles and artist names
+titlesartists <- page %>%
+  html_nodes(".title") %>%
+  html_text()
+
+# check that album titles and artist names were scraped correctly
+titlesartists
+
+# scrape rankings
+rankings <- page %>%
+  html_nodes(".number") %>%
+  html_text()
+
+# check that rankings were scraped correctly
+rankings
+
+# put together in a data frame
+top_200_2010s <- tibble(
+  titles_artists = titlesartists,
+  rankings = rankings
+)
+
+# check the resulting dataframe
+top_200_2010s
+```
+
 
 ### Exercise 2
 
