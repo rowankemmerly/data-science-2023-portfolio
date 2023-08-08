@@ -1,0 +1,792 @@
+---
+title: "measurement study july 2023"
+output: html_document
+date: "2023-07-21"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Follow-Up Analyses July 2023
+
+```{r factor-one-assuredness-scale-creation}
+
+library(dplyr)
+
+# For all of the commands below, I'm following this two-step process:
+
+# 1. Selecting variables that loaded on different factors with the 6 factor extraction with promax rotation
+# 2. Create the new data frame using the selected variables
+
+
+# Factor 1 - Assuredness
+
+## All items - assuredness and decisiveness
+
+### 1/2
+factor1_all22 <- c("being_free_of_doubt",
+"being_sure_of_yourself",
+"being_sensitive_to_failure_r",
+"feeling_secure",
+"not_believing_in_yourself_r",
+"feeling_unassured_r",
+"not_being_able_to_make_up_your_mind_r",
+"being_indecisive_r",
+"being_unsure_about_what_decisions_to_make_r",
+"being_decisive",
+"being_comfortable_making_decisions",
+"deciding_without_hesitation",
+"wavering_between_options_when_deciding_what_to_do_r",
+"making_conclusive_decisions",
+"making_decisions_without_second_guessing_yourself",
+"being_hesitant_r",
+"thinking_quickly",
+"being_tentative_in_making_decisions_r",
+"being_overwhelmed_r",
+"acting_with_conviction",
+"being_apprehensive_r",
+"following_other_peoples_lead_r")
+
+### 2/2
+factor1_all22 <- measurementstudy %>%
+                     select(all_of(factor1_all22))
+
+## All items - Assuredness
+
+### 1/2
+factor1a_all10 <- c("being_free_of_doubt",
+"being_sure_of_yourself",
+"being_sensitive_to_failure_r",
+"feeling_secure",
+"not_believing_in_yourself_r",
+"feeling_unassured_r",
+"being_overwhelmed_r",
+"acting_with_conviction",
+"being_apprehensive_r",
+"following_other_peoples_lead_r")
+
+### 2/2
+factor1a_all10 <- measurementstudy %>%
+                     select(all_of(factor1a_all10))
+
+## 6-item scale
+
+### 1/2
+factor1a_6 <- c("being_free_of_doubt",
+"acting_with_conviction",
+"being_sure_of_yourself",
+"not_believing_in_yourself_r",
+"being_overwhelmed_r",
+"being_sensitive_to_failure_r")
+
+### 2/2
+factor1a_6 <- measurementstudy %>%
+                     select(all_of(factor1a_6))
+
+## 4-item scale
+
+### 1/2
+factor1a_4 <- c("being_free_of_doubt",
+"acting_with_conviction",
+"not_believing_in_yourself_r",
+"being_overwhelmed_r")
+
+### 2/2
+factor1a_4 <- measurementstudy %>%
+                     select(all_of(factor1a_4))
+
+
+```
+
+```{r factor-one-decisiveness-scale-creation}
+
+# Factor 1 - Decisiveness
+
+## All items - Decisiveness
+
+### 1/2
+factor1d_all12 <- c("not_being_able_to_make_up_your_mind_r",
+"being_indecisive_r",
+"being_unsure_about_what_decisions_to_make_r",
+"being_decisive",
+"being_comfortable_making_decisions",
+"deciding_without_hesitation",
+"wavering_between_options_when_deciding_what_to_do_r",
+"making_conclusive_decisions",
+"making_decisions_without_second_guessing_yourself",
+"being_hesitant_r",
+"thinking_quickly",
+"being_tentative_in_making_decisions_r")
+
+### 2/2
+factor1d_all12 <- measurementstudy %>%
+                     select(all_of(factor1d_all12))
+
+## 6-item scale
+
+### 1/2
+factor1d_6 <- c("deciding_without_hesitation",
+"making_conclusive_decisions",
+"being_decisive",
+"not_being_able_to_make_up_your_mind_r",
+"being_indecisive_r",
+"being_hesitant_r")
+
+### 2/2
+factor1d_6 <- measurementstudy %>%
+                     select(all_of(factor1d_6))
+
+## 4-item scale
+
+### 1/2
+factor1d_4 <- c("deciding_without_hesitation",
+"making_conclusive_decisions",
+"not_being_able_to_make_up_your_mind_r",
+"being_indecisive_r")
+
+### 2/2
+factor1d_4 <- measurementstudy %>%
+                     select(all_of(factor1d_4))
+
+
+```
+
+```{r factor-two-scale-creation}
+
+# Factor 2 - (Undecided—where socially undesriable items seem to be loading together)
+
+## All items 
+
+### 1/2
+factor2_all14 <- c("being_full_of_doubt_r",
+"feeling_insecure_r",
+"not_trusting_in_your_abilities_r",
+"being_unmotivated_r",
+"being_apathetic_r",
+"lacking_conviction_r",
+"being_unfriendly_r",
+"being_withdrawn_r",
+"being_at_odds_with_others_r",
+"being_stubborn_r",
+"being_uninterested_in_new_information_r",
+"being_resistant_to_new_information_r",
+"not_wanting_to_get_feedback_r",
+"not_wanting_to_learn_new_ways_of_doing_things_r")
+
+### 2/2
+factor2_all14 <- measurementstudy %>%
+                     select(all_of(factor2_all14))
+
+
+```
+
+```{r factor-three-scale-creation}
+
+# Factor 3 - Risk taking
+
+## All items 
+
+### 1/2
+factor3_all11 <- c("taking_initiative",
+"taking_risks",
+"avoiding_taking_risks_r",
+"playing_it_safe_r",
+"taking_chances",
+"being_risk_seeking",
+"not_taking_risks_r",
+"being_risk_averse_r",
+"taking_a_calculated_gamble",
+"being_bold_when_making_decisions",
+"being_cautious_r")
+
+### 2/2
+factor3_all11 <- measurementstudy %>%
+                     select(all_of(factor3_all11))
+
+## 6-item scale
+
+### 1/2
+factor3_6 <- c("taking_risks",
+"taking_a_calculated_gamble",
+"being_risk_seeking",
+"avoiding_taking_risks_r",
+"playing_it_safe_r",
+"not_taking_risks_r")
+
+### 2/2
+factor3_6 <- measurementstudy %>%
+                     select(all_of(factor3_6))
+
+## 4-item scale
+
+### 1/2
+factor3_4 <- c("taking_risks",
+"taking_a_calculated_gamble",
+"avoiding_taking_risks_r",
+"playing_it_safe_r")
+
+### 2/2
+factor3_4 <- measurementstudy %>%
+                     select(all_of(factor3_4))
+
+
+```
+
+```{r factor-four-scale-creation}
+
+# Factor 4 - (Undecided—where socially desriable/openness items seem to be loading together)
+
+## All items 
+
+### 1/2
+factor4_all9 <- c("being_helpful",
+"accepting_other_viewpoints",
+"being_open_to_new_information",
+"being_open_to_all_options",
+"being_open_minded",
+"desiring_additional_viewpoints",
+"wanting_to_learn_more",
+"being_closed_minded_r",
+"making_decisions_carefully_r")
+
+### 2/2
+factor4_all9 <- measurementstudy %>%
+                     select(all_of(factor4_all9))
+
+
+
+```
+
+```{r factor-five-scale-creation}
+
+# Factor 5 - Friendly/sociable/external motivation
+
+## All items 
+
+### 1/2
+factor5_all8 <- c("being_energized",
+"being_outgoing",
+"being_sociable",
+"being_extraverted",
+"being_shy_r",
+"putting_yourself_out_there",
+"being_friendly",
+"being_unsociable_r")
+
+### 2/2
+factor5_all8 <- measurementstudy %>%
+                     select(all_of(factor5_all8))
+
+
+## 4-item scale
+
+### 1/2
+factor5_4 <- c("being_outgoing",
+"being_extraverted",
+"being_shy_r",
+"being_unsociable_r")
+
+### 2/2
+factor5_4 <- measurementstudy %>%
+                     select(all_of(factor5_4))
+
+
+```
+
+```{r factor-six-scale-creation}
+
+# Factor 6 - (Undecided - seems to be empowerment/internal motivation, but there are only three items originally assigned to empowerment)
+
+## All items 
+
+### 1/2
+factor6_all8 <- c("believing_in_yourself",
+"trusting_in_your_abilities",
+"being_self_assured",
+"being_motivated",
+"being_driven",
+"being_empowered",
+"being_eager_to_share_knowledge",
+"being_unwilling_to_make_suggestions_r")
+
+### 2/2
+factor6_all8 <- measurementstudy %>%
+                     select(all_of(factor6_all8))
+
+```
+
+```{r andys-empowerment-idea-august-third}
+
+
+
+## All items 
+
+### 1/2
+empowerment_test_6 <- c("being_unmotivated_r",
+"being_apathetic_r",
+"lacking_conviction_r",
+"being_motivated",
+"being_driven",
+"being_empowered")
+
+empowerment_test_4 <- c("being_apathetic_r",
+"lacking_conviction_r",
+"being_motivated",
+"being_empowered")
+
+### 2/2
+empowerment_test_6 <- measurementstudy %>%
+                     select(all_of(empowerment_test_6))
+
+empowerment_test_4 <- measurementstudy %>%
+                     select(all_of(empowerment_test_4))
+
+# correlations
+
+empowerment_test_6_cormatrix <- cor(empowerment_test_6)
+empowerment_test_6_cormatrix
+
+
+# alphas
+
+alpha_empowerment_test_6 <- empowerment_test_6 %>%
+  psych::alpha() %>%
+  .$total %>%
+  .$raw_alpha
+
+print(alpha_empowerment_test_6)
+
+alpha_empowerment_test_4 <- empowerment_test_4 %>%
+  psych::alpha() %>%
+  .$total %>%
+  .$raw_alpha
+
+print(alpha_empowerment_test_4)
+
+
+
+```
+
+
+```{r alphas}
+
+library(psych)
+
+# Factor 1 - Assuredness
+
+alpha_factor1_all22 <- factor1_all22 %>%
+  psych::alpha() %>%
+  .$total %>%
+  .$raw_alpha
+
+alpha_factor1a_all10 <- factor1a_all10 %>%
+  psych::alpha() %>%
+  .$total %>%
+  .$raw_alpha
+
+alpha_factor1a_6 <- factor1a_6 %>%
+  psych::alpha() %>%
+  .$total %>%
+  .$raw_alpha
+
+alpha_factor1a_4 <- factor1a_4 %>%
+  psych::alpha() %>%
+  .$total %>%
+  .$raw_alpha
+
+
+
+# Factor 1 - Decisiveness
+
+alpha_factor1d_all12 <- factor1d_all12 %>%
+  psych::alpha() %>%
+  .$total %>%
+  .$raw_alpha
+
+alpha_factor1d_6 <- factor1d_6 %>%
+  psych::alpha() %>%
+  .$total %>%
+  .$raw_alpha
+
+alpha_factor1d_4 <- factor1d_4 %>%
+  psych::alpha() %>%
+  .$total %>%
+  .$raw_alpha
+
+# Factor 2 
+
+alpha_factor2_all14 <- factor2_all14 %>%
+  psych::alpha() %>%
+  .$total %>%
+  .$raw_alpha
+
+
+# Factor 3 
+
+alpha_factor3_all11 <- factor3_all11 %>%
+  psych::alpha() %>%
+  .$total %>%
+  .$raw_alpha
+
+alpha_factor3_6 <- factor3_6 %>%
+  psych::alpha() %>%
+  .$total %>%
+  .$raw_alpha
+
+alpha_factor3_4 <- factor3_4 %>%
+  psych::alpha() %>%
+  .$total %>%
+  .$raw_alpha
+
+# Factor 4 
+
+alpha_factor4_all9 <- factor4_all9 %>%
+  psych::alpha() %>%
+  .$total %>%
+  .$raw_alpha
+
+
+# Factor 5 
+
+alpha_factor5_all8 <- factor5_all8 %>%
+  psych::alpha() %>%
+  .$total %>%
+  .$raw_alpha
+
+
+alpha_factor5_4 <- factor5_4 %>%
+  psych::alpha() %>%
+  .$total %>%
+  .$raw_alpha
+
+# Factor 6 
+
+alpha_factor6_all8 <- factor6_all8 %>%
+  psych::alpha() %>%
+  .$total %>%
+  .$raw_alpha
+
+
+
+```
+
+```{r variances}
+
+library(psych)
+
+# Factor 1 - Assuredness
+
+variance_factor1_all22 <- factor1_all22 %>%
+  var() 
+
+variance_factor1a_all10 <- factor1a_all10 %>%
+  var() 
+
+
+variance_factor1a_6 <- factor1a_6 %>%
+  var()
+
+
+variance_factor1a_4 <- factor1a_4 %>%
+  var()
+
+
+
+
+# Factor 1 - Decisiveness
+
+variance_factor1d_all12 <- factor1d_all12 %>%
+  var()
+
+
+variance_factor1d_6 <- factor1d_6 %>%
+  var()
+
+
+variance_factor1d_4 <- factor1d_4 %>%
+  var()
+
+
+# Factor 2 
+
+variance_factor2_all14 <- factor2_all14 %>%
+  var()
+
+
+
+# Factor 3 
+
+variance_factor3_all11 <- factor3_all11 %>%
+  var()
+
+
+variance_factor3_6 <- factor3_6 %>%
+  var()
+
+variance_factor3_4 <- factor3_4 %>%
+  var()
+
+# Factor 4 
+
+variance_factor4_all9 <- factor4_all9 %>%
+  var()
+
+
+
+# Factor 5 
+
+variance_factor5_all8 <- factor5_all8 %>%
+  var()
+
+
+
+variance_factor5_4 <- factor5_4 %>%
+  var()
+
+
+# Factor 6 
+
+variance_factor6_all8 <- factor6_all8 %>%
+  var()
+
+
+
+
+```
+
+
+```{r list-all-variables}
+
+# Get a list of all objects in the environment
+all_objects <- ls()
+
+# Loop through each object and print its name and value
+for (obj_name in all_objects) {
+  obj_value <- get(obj_name)
+  cat(obj_name, ": ", obj_value, "\n")
+}
+
+
+
+```
+
+```{r re-factor-anaylsis}
+
+allitems <- bind_cols(factor1a_all10, factor1d_all12, factor2_all14, factor3_all11, factor4_all9, factor5_all8, factor6_all8)
+
+# Remove rows with missing values
+allitems <- na.omit(allitems)
+
+
+six_factors_promax <- factanal(allitems, factors = 6, na.action = "pairwise.complete.obs", rotation = "promax", method = "correlation", scores = "regression")
+
+six_factors_promax
+
+## creating a data frame with factor loadings
+
+six_factors_promax_loadings <- six_factors_promax$loadings
+
+six_factors_promax_loadings_df <- as.data.frame.matrix(six_factors_promax_loadings)
+
+# adding row names (item names) as their own column
+six_factors_promax_loadings_df$Item <- rownames(six_factors_promax_loadings_df)
+
+
+six_factors_promax_loadings_df
+
+## export to excel
+
+library(writexl)
+
+write_xlsx(six_factors_promax_loadings_df, path = "factor_loadings_7.29.xlsx", col_names = TRUE)
+
+
+```
+
+```{r differences-in-variance-explained}
+
+allitems_factor1a_6 <- bind_cols(factor1a_6, factor1d_all12, factor2_all14, factor3_all11, factor4_all9, factor5_all8, factor6_all8)
+
+allitems_factor1a_6 <- na.omit(allitems_factor1a_6)
+
+six_factors_promax_factor1a_6 <- factanal(allitems_factor1a_6, factors = 6, na.action = "pairwise.complete.obs", rotation = "promax", method = "correlation", scores = "regression")
+
+six_factors_promax_factor1a_6
+
+###
+
+allitems_factor1a_4 <- bind_cols(factor1a_4, factor1d_all12, factor2_all14, factor3_all11, factor4_all9, factor5_all8, factor6_all8)
+
+allitems_factor1a_4 <- na.omit(allitems_factor1a_4)
+
+six_factors_promax_factor1a_4 <- factanal(allitems_factor1a_4, factors = 6, na.action = "pairwise.complete.obs", rotation = "promax", method = "correlation", scores = "regression")
+
+six_factors_promax_factor1a_4
+
+###
+
+allitems_factor1d_6 <- bind_cols(factor1d_6, factor1a_all10, factor2_all14, factor3_all11, factor4_all9, factor5_all8, factor6_all8)
+
+allitems_factor1d_6 <- na.omit(allitems_factor1d_6)
+
+six_factors_promax_factor1d_6 <- factanal(allitems_factor1d_6, factors = 6, na.action = "pairwise.complete.obs", rotation = "promax", method = "correlation", scores = "regression")
+
+six_factors_promax_factor1d_6
+
+###
+
+allitems_factor1d_4 <- bind_cols(factor1d_4, factor1a_all10, factor2_all14, factor3_all11, factor4_all9, factor5_all8, factor6_all8)
+
+allitems_factor1d_4 <- na.omit(allitems_factor1d_4)
+
+six_factors_promax_factor1d_4 <- factanal(allitems_factor1d_4, factors = 6, na.action = "pairwise.complete.obs", rotation = "promax", method = "correlation", scores = "regression")
+
+six_factors_promax_factor1d_4
+
+###
+
+
+allitems_factor3_6 <- bind_cols(factor1d_all12, factor1a_all10, factor2_all14, factor3_6, factor4_all9, factor5_all8, factor6_all8)
+
+allitems_factor3_6 <- na.omit(allitems_factor3_6)
+
+six_factors_promax_factor3_6 <- factanal(allitems_factor3_6, factors = 6, na.action = "pairwise.complete.obs", rotation = "promax", method = "correlation", scores = "regression")
+
+six_factors_promax_factor3_6
+
+###
+
+allitems_factor3_4 <- bind_cols(factor1d_all12, factor1a_all10, factor2_all14, factor3_4, factor4_all9, factor5_all8, factor6_all8)
+
+allitems_factor3_4 <- na.omit(allitems_factor3_4)
+
+six_factors_promax_factor3_4 <- factanal(allitems_factor3_4, factors = 6, na.action = "pairwise.complete.obs", rotation = "promax", method = "correlation", scores = "regression")
+
+six_factors_promax_factor3_4
+
+###
+
+allitems_factor5_4 <- bind_cols(factor1d_all12, factor1a_all10, factor2_all14, factor3_all11, factor4_all9, factor5_4, factor6_all8)
+
+allitems_factor5_4 <- na.omit(allitems_factor5_4)
+
+six_factors_promax_factor5_4 <- factanal(allitems_factor5_4, factors = 6, na.action = "pairwise.complete.obs", rotation = "promax", method = "correlation", scores = "regression")
+
+six_factors_promax_factor5_4
+
+
+```
+
+```{r no-openness-items-factanal}
+
+# creating a new data frame without any items that we had originally assigned as "openness to information"
+
+allitems_no_openness <- select(allitems, -being_stubborn_r,
+-being_uninterested_in_new_information_r,
+-being_resistant_to_new_information_r,
+-not_wanting_to_get_feedback_r,
+-not_wanting_to_learn_new_ways_of_doing_things_r,
+-accepting_other_viewpoints,
+-being_open_to_new_information,
+-being_open_to_all_options,
+-being_open_minded,
+-desiring_additional_viewpoints,
+-wanting_to_learn_more,
+-being_closed_minded_r)
+
+# re-doing factor analysis without these items
+
+
+# Remove rows with missing values
+allitems_no_openness <- na.omit(allitems_no_openness)
+
+
+six_factors_promax_no_openness <- factanal(allitems_no_openness, factors = 6, na.action = "pairwise.complete.obs", rotation = "promax", method = "correlation", scores = "regression")
+
+six_factors_promax_no_openness
+
+## creating a data frame with factor loadings
+
+six_factors_promax_no_openness_loadings <- six_factors_promax_no_openness$loadings
+
+six_factors_promax_no_openness_loadings_df <- as.data.frame.matrix(six_factors_promax_no_openness_loadings)
+
+# adding row names (item names) as their own column
+six_factors_promax_no_openness_loadings_df$Item <- rownames(six_factors_promax_no_openness_loadings_df)
+
+
+six_factors_promax_no_openness_loadings_df
+
+## export to excel
+
+library(writexl)
+
+write_xlsx(six_factors_promax_no_openness_loadings_df, path = "no_openness_factor_loadings_7.29.xlsx", col_names = TRUE)
+
+
+```
+
+```{r factor-assignments}
+
+
+#seeing the correlations among factors
+
+factor_scores <- six_factors_promax_no_openness$scores
+factor_correlation <- cor(factor_scores)
+
+factor_correlation
+
+# Creating dataframes for plotting
+plot_consqfact <- data.frame(item = row.names(six_factors_promax_no_openness_loadings),
+                      loading = six_factors_promax_no_openness_loadings[,1],
+                      factor = "Factor 1") # Change group and loadings indices for other factors
+plot_consqfact <- rbind(plot_consqfact, data.frame(item = row.names(six_factors_promax_no_openness_loadings),
+                                     loading = six_factors_promax_no_openness_loadings[,2],
+                                     factor = "Factor 2"))
+plot_consqfact <- rbind(plot_consqfact, data.frame(item = row.names(six_factors_promax_no_openness_loadings),
+                                     loading = six_factors_promax_no_openness_loadings[,3],
+                                     factor = "Factor 3"))
+plot_consqfact <- rbind(plot_consqfact, data.frame(item = row.names(six_factors_promax_no_openness_loadings),
+                                     loading = six_factors_promax_no_openness_loadings[,4],
+                                     factor = "Factor 4"))
+plot_consqfact <- rbind(plot_consqfact, data.frame(item = row.names(six_factors_promax_no_openness_loadings),
+                                     loading = six_factors_promax_no_openness_loadings[,5],
+                                     factor = "Factor 5"))
+plot_consqfact <- rbind(plot_consqfact, data.frame(item = row.names(six_factors_promax_no_openness_loadings),
+                                     loading = six_factors_promax_no_openness_loadings[,6],
+                                     factor = "Factor 6"))
+
+
+ggplot(plot_consqfact, aes(y = abs(loading), x = item, fill = factor)) +
+  geom_col(stat = "identity") +
+  scale_fill_discrete(name = "Factor") +
+  coord_flip() +
+  ylab("Absolute Loading") +
+  xlab("Item")
+
+plot_consqfact <- plot_consqfact %>%
+  mutate(abs_loading = abs(loading))
+
+plot_consqfact_assigned <- plot_consqfact %>%
+  group_by(item) %>%
+  top_n(1, abs_loading)
+
+plot_consqfact_assigned6pro_no_openness <- plot_consqfact_assigned %>%
+  arrange(factor, desc(abs_loading))
+
+
+plot_consqfact_assigned6pro_no_openness
+
+# Specify the file path for the Excel file
+file_path <- "~/Library/Mobile Documents/com~apple~CloudDocs/Wake Forest/MA Program/Data Science Spring 2023/data-science-2023-portfolio/docs/p10/no_openness_assignments.xlsx"
+
+# Write the tibble to an Excel file
+write_xlsx(plot_consqfact_assigned6pro_no_openness, path = file_path)
+
+
+```
+
+
+
+

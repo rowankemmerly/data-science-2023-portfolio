@@ -82,7 +82,7 @@ ggplot(plot_consqfact, aes(y = abs(loading), x = item, fill = factor)) +
 
 ### Plotting 5 Factors
 
-```{r plotting-factor-loadings-5}
+```{r plotting-factor-loadings-5-varimax}
 
 consequences_factor.none_5 <- factanal(conf_consequences_items, factors = 5, na.action = "pairwise.complete.obs", rotation = "none", method = "correlation", scores = "regression")
 
@@ -123,15 +123,217 @@ ggplot(plot_consqfact, aes(y = abs(loading), x = item, fill = factor)) +
   ylab("Absolute Loading") +
   xlab("Item")
 
+plot_consqfact <- plot_consqfact %>%
+  mutate(abs_loading = abs(loading))
+
+plot_consqfact_assigned <- plot_consqfact %>%
+  group_by(item) %>%
+  top_n(1, abs_loading)
+
+plot_consqfact_assigned5vari <- plot_consqfact_assigned %>%
+  arrange(factor, desc(abs_loading))
+
+
+plot_consqfact_assigned5vari
+
+write_xlsx(plot_consqfact_assigned5vari, path = "~/Library/Mobile Documents/com~apple~CloudDocs/Wake Forest/MA Program/Data Science Spring 2023/data-science-2023-portfolio/docs/p10/plot_consqfact_assigned5vari.xlsx")
+
 
 ```
 
+
+```{r plotting-factor-loadings-5-promax}
+
+consequences_factor.none_5 <- factanal(conf_consequences_items, factors = 5, na.action = "pairwise.complete.obs", rotation = "none", method = "correlation", scores = "regression")
+
+consequences_factor.varimax_5 <- factanal(conf_consequences_items, factors = 5, na.action = "pairwise.complete.obs", rotation = "varimax", method = "correlation", scores = "regression")
+
+consequences_factor.promax_5 <- factanal(conf_consequences_items, factors = 5, na.action = "pairwise.complete.obs", rotation = "promax", method = "correlation", scores = "regression")
+
+
+
+consequences_factor.none_loadings <- consequences_factor.none_5$loadings
+consequences_factor.varimax_loadings <- consequences_factor.varimax_5$loadings
+consequences_factor.promax_loadings <- consequences_factor.promax_5$loadings
+
+
+# Creating dataframes for plotting
+plot_consqfact <- data.frame(item = row.names(consequences_factor.promax_loadings),
+                      loading = consequences_factor.promax_loadings[,1],
+                      factor = "Factor 1") # Change group and loadings indices for other factors
+plot_consqfact <- rbind(plot_consqfact, data.frame(item = row.names(consequences_factor.promax_loadings),
+                                     loading = consequences_factor.promax_loadings[,2],
+                                     factor = "Factor 2"))
+plot_consqfact <- rbind(plot_consqfact, data.frame(item = row.names(consequences_factor.promax_loadings),
+                                     loading = consequences_factor.promax_loadings[,3],
+                                     factor = "Factor 3"))
+plot_consqfact <- rbind(plot_consqfact, data.frame(item = row.names(consequences_factor.promax_loadings),
+                                     loading = consequences_factor.promax_loadings[,4],
+                                     factor = "Factor 4"))
+plot_consqfact <- rbind(plot_consqfact, data.frame(item = row.names(consequences_factor.promax_loadings),
+                                     loading = consequences_factor.promax_loadings[,5],
+                                     factor = "Factor 5"))
+
+
+
+ggplot(plot_consqfact, aes(y = abs(loading), x = item, fill = factor)) +
+  geom_col(stat = "identity") +
+  scale_fill_discrete(name = "Factor") +
+  coord_flip() +
+  ylab("Absolute Loading") +
+  xlab("Item")
+
+plot_consqfact <- plot_consqfact %>%
+  mutate(abs_loading = abs(loading))
+
+plot_consqfact_assigned <- plot_consqfact %>%
+  group_by(item) %>%
+  top_n(1, abs_loading)
+
+plot_consqfact_assigned5pro <- plot_consqfact_assigned %>%
+  arrange(factor, desc(abs_loading))
+
+
+plot_consqfact_assigned5pro
+
+write_xlsx(plot_consqfact_assigned5pro, path = "~/Library/Mobile Documents/com~apple~CloudDocs/Wake Forest/MA Program/Data Science Spring 2023/data-science-2023-portfolio/docs/p10/plot_consqfact_assigned5pro.xlsx")
+
+```
+
+### Plotting 6 Factors
+
+```{r plotting-factor-loadings-6-varimax}
+
+consequences_factor.none_6 <- factanal(conf_consequences_items, factors = 6, na.action = "pairwise.complete.obs", rotation = "none", method = "correlation", scores = "regression")
+
+consequences_factor.varimax_6 <- factanal(conf_consequences_items, factors = 6, na.action = "pairwise.complete.obs", rotation = "varimax", method = "correlation", scores = "regression")
+
+consequences_factor.promax_6 <- factanal(conf_consequences_items, factors = 6, na.action = "pairwise.complete.obs", rotation = "promax", method = "correlation", scores = "regression")
+
+
+
+consequences_factor.none_loadings <- consequences_factor.none_6$loadings
+consequences_factor.varimax_loadings <- consequences_factor.varimax_6$loadings
+consequences_factor.promax_loadings <- consequences_factor.promax_6$loadings
+
+
+# Creating dataframes for plotting
+plot_consqfact <- data.frame(item = row.names(consequences_factor.varimax_loadings),
+                      loading = consequences_factor.varimax_loadings[,1],
+                      factor = "Factor 1") # Change group and loadings indices for other factors
+plot_consqfact <- rbind(plot_consqfact, data.frame(item = row.names(consequences_factor.varimax_loadings),
+                                     loading = consequences_factor.varimax_loadings[,2],
+                                     factor = "Factor 2"))
+plot_consqfact <- rbind(plot_consqfact, data.frame(item = row.names(consequences_factor.varimax_loadings),
+                                     loading = consequences_factor.varimax_loadings[,3],
+                                     factor = "Factor 3"))
+plot_consqfact <- rbind(plot_consqfact, data.frame(item = row.names(consequences_factor.varimax_loadings),
+                                     loading = consequences_factor.varimax_loadings[,4],
+                                     factor = "Factor 4"))
+plot_consqfact <- rbind(plot_consqfact, data.frame(item = row.names(consequences_factor.varimax_loadings),
+                                     loading = consequences_factor.varimax_loadings[,5],
+                                     factor = "Factor 5"))
+plot_consqfact <- rbind(plot_consqfact, data.frame(item = row.names(consequences_factor.varimax_loadings),
+                                     loading = consequences_factor.varimax_loadings[,6],
+                                     factor = "Factor 6"))
+
+
+ggplot(plot_consqfact, aes(y = abs(loading), x = item, fill = factor)) +
+  geom_col(stat = "identity") +
+  scale_fill_discrete(name = "Factor") +
+  coord_flip() +
+  ylab("Absolute Loading") +
+  xlab("Item")
+
+plot_consqfact <- plot_consqfact %>%
+  mutate(abs_loading = abs(loading))
+
+plot_consqfact_assigned <- plot_consqfact %>%
+  group_by(item) %>%
+  top_n(1, abs_loading)
+
+plot_consqfact_assigned6vari <- plot_consqfact_assigned %>%
+  arrange(factor, desc(abs_loading))
+
+
+plot_consqfact_assigned6vari
+
+# write_xlsx(plot_consqfact_assigned6vari, path = "~/Library/Mobile Documents/com~apple~CloudDocs/Wake Forest/MA Program/Data Science Spring 2023/data-science-2023-portfolio/docs/p10/plot_consqfact_assigned6vari.xlsx")
+
+```
+
+```{r plotting-factor-loadings-6-promax}
+
+consequences_factor.none_6 <- factanal(conf_consequences_items, factors = 6, na.action = "pairwise.complete.obs", rotation = "none", method = "correlation", scores = "regression")
+
+consequences_factor.varimax_6 <- factanal(conf_consequences_items, factors = 6, na.action = "pairwise.complete.obs", rotation = "varimax", method = "correlation", scores = "regression")
+
+consequences_factor.promax_6 <- factanal(conf_consequences_items, factors = 6, na.action = "pairwise.complete.obs", rotation = "promax", method = "correlation", scores = "regression")
+
+consequences_factor.varimax_6
+
+consequences_factor.none_loadings <- consequences_factor.none_6$loadings
+consequences_factor.varimax_loadings <- consequences_factor.varimax_6$loadings
+consequences_factor.promax_loadings <- consequences_factor.promax_6$loadings
+
+#seeing the correlations among factors
+
+factor_scores <- consequences_factor.promax_6$scores
+factor_correlation <- cor(factor_scores)
+
+factor_correlation
+
+# Creating dataframes for plotting
+plot_consqfact <- data.frame(item = row.names(consequences_factor.promax_loadings),
+                      loading = consequences_factor.promax_loadings[,1],
+                      factor = "Factor 1") # Change group and loadings indices for other factors
+plot_consqfact <- rbind(plot_consqfact, data.frame(item = row.names(consequences_factor.promax_loadings),
+                                     loading = consequences_factor.promax_loadings[,2],
+                                     factor = "Factor 2"))
+plot_consqfact <- rbind(plot_consqfact, data.frame(item = row.names(consequences_factor.promax_loadings),
+                                     loading = consequences_factor.promax_loadings[,3],
+                                     factor = "Factor 3"))
+plot_consqfact <- rbind(plot_consqfact, data.frame(item = row.names(consequences_factor.promax_loadings),
+                                     loading = consequences_factor.promax_loadings[,4],
+                                     factor = "Factor 4"))
+plot_consqfact <- rbind(plot_consqfact, data.frame(item = row.names(consequences_factor.promax_loadings),
+                                     loading = consequences_factor.promax_loadings[,5],
+                                     factor = "Factor 5"))
+plot_consqfact <- rbind(plot_consqfact, data.frame(item = row.names(consequences_factor.promax_loadings),
+                                     loading = consequences_factor.promax_loadings[,6],
+                                     factor = "Factor 6"))
+
+
+ggplot(plot_consqfact, aes(y = abs(loading), x = item, fill = factor)) +
+  geom_col(stat = "identity") +
+  scale_fill_discrete(name = "Factor") +
+  coord_flip() +
+  ylab("Absolute Loading") +
+  xlab("Item")
+
+plot_consqfact <- plot_consqfact %>%
+  mutate(abs_loading = abs(loading))
+
+plot_consqfact_assigned <- plot_consqfact %>%
+  group_by(item) %>%
+  top_n(1, abs_loading)
+
+plot_consqfact_assigned6pro <- plot_consqfact_assigned %>%
+  arrange(factor, desc(abs_loading))
+
+
+plot_consqfact_assigned6pro
+
+
+
+# write_xlsx(plot_consqfact_assigned6pro, path = "~/Library/Mobile Documents/com~apple~CloudDocs/Wake Forest/MA Program/Data Science Spring 2023/data-science-2023-portfolio/docs/p10/plot_consqfact_assigned6pro.xlsx")
+```
 
 ### Assigning Items to Factors
 
 It's definitely easier to make sense of the factor loadings with a visualization rather than just looking at a table, but with this many variables, it's still hard to get a good grasp of what the data are telling this. I'm going to transpose the data from long to wide format, and create a new variable that selects the highest absolute value loading for each item. 
 
-```{r assigning-factors}
+# ```{r assigning-factors}
 
 # # Convert from long to wide format
 # plot_consqfact_wide <- plot_consqfact %>%
@@ -184,18 +386,18 @@ It's definitely easier to make sense of the factor loadings with a visualization
 #   ylab("Absolute Loading") +
 #   xlab("Item")
 
-plot_consqfact <- plot_consqfact %>%
-  mutate(abs_loading = abs(loading))
-
-plot_consqfact_assigned <- plot_consqfact %>%
-  group_by(item) %>%
-  top_n(1, abs_loading)
-
-plot_consqfact_assigned <- plot_consqfact_assigned %>%
-  arrange(factor, desc(abs_loading))
-
-
-plot_consqfact_assigned
+# plot_consqfact <- plot_consqfact %>%
+#   mutate(abs_loading = abs(loading))
+# 
+# plot_consqfact_assigned <- plot_consqfact %>%
+#   group_by(item) %>%
+#   top_n(1, abs_loading)
+# 
+# plot_consqfact_assigned <- plot_consqfact_assigned %>%
+#   arrange(factor, desc(abs_loading))
+# 
+# 
+# plot_consqfact_assigned
 
 # ggplot(plot_consqfact_assigned, aes(y = abs_loading, x = item, fill = factor)) +
 #   geom_col() +
@@ -215,10 +417,10 @@ plot_consqfact_assigned
 #   coord_flip() +
 #   ylab("Absolute Loading") +
 #   xlab("Item")
-# 
+<!-- #  -->
 
 
-```
+<!-- ``` -->
 
 Well, I have been trying to figure out an efficient way to reorder the items on my x axis in descending loading order by factor, but I just can't figure it out yet. So above is the dataset arranged in the way I would have liked it to be graphed! Here is how I would interpret the factors at first glance:
 
@@ -233,4 +435,28 @@ Well, I have been trying to figure out an efficient way to reorder the items on 
 5. Risk taking
 
 It's interesting that being open to new information and being closed to new information seem to have mostly loaded onto different factors. 
+
+
+***Addendum: exporting to Excel for further (collaborative) visualization
+
+
+```{r export-to-excel}
+
+# Install the package if not already installed
+install.packages("writexl")
+
+# Load the necessary libraries
+library(tidyverse)
+library(writexl)
+
+
+# Specify the file path for the Excel file
+file_path <- "~/Library/Mobile Documents/com~apple~CloudDocs/Wake Forest/MA Program/Data Science Spring 2023/data-science-2023-portfolio/docs/p10.xlsx"
+
+# Write the tibble to an Excel file
+write_xlsx(plot_consqfact_assigned, path = file_path)
+
+
+
+```
 
