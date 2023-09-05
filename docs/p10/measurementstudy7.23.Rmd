@@ -330,9 +330,9 @@ empowerment_test_6 <- c("being_unmotivated_r",
 "being_driven",
 "being_empowered")
 
-empowerment_test_4 <- c("being_apathetic_r",
+empowerment_test_4 <- c("being_unmotivated_r",
 "lacking_conviction_r",
-"being_motivated",
+"being_driven",
 "being_empowered")
 
 ### 2/2
@@ -788,5 +788,74 @@ write_xlsx(plot_consqfact_assigned6pro_no_openness, path = file_path)
 ```
 
 
+### Correlations between items in final scale versions 8/18/23
 
+
+```{r inter-item-scale-correlations}
+
+
+# creating data frame with variables from all of the 4-item scales
+allfouritemscales <- bind_cols(factor1a_4, factor1d_4, factor3_4, factor5_4, empowerment_test_4)
+
+# creating data frame with variables from all of the 6-item scales
+allsixitemscales <- bind_cols(factor1a_6, factor1d_6, factor3_6, factor5_4, empowerment_test_6)
+
+# creating correlation matrices for all four-item scales and for all six-item scales
+fouritemscales_cormatrix <- cor(allfouritemscales)
+fouritemscales_cormatrix
+
+sixitemscales_cormatrix <- cor(allsixitemscales)
+sixitemscales_cormatrix
+
+# transforming the matrices into dataframes 
+
+fouritemscales_cormatrix_df <- as.data.frame(fouritemscales_cormatrix, col_names = TRUE)
+sixitemscales_cormatrix_df <- as.data.frame(sixitemscales_cormatrix, col_names = TRUE)
+
+# writing the correlation dfs to excel
+
+write_xlsx(fouritemscales_cormatrix_df, "fouritemscales_cormatrix.xlsx")
+write_xlsx(sixitemscales_cormatrix_df, "sixitemscales_cormatrix.xlsx")
+
+
+```
+
+### Correlations among scale scores
+
+
+```{r calculating scale scores}
+
+# 
+# # creating data frame with variables from all of the 4-item scales
+# allfouritemscales <- bind_cols(factor1a_4, factor1d_4, factor3_4, factor5_4, empowerment_test_4)
+# 
+# # creating data frame with variables from all of the 6-item scales
+# allsixitemscales <- bind_cols(factor1a_6, factor1d_6, factor3_6, factor5_4,  empowerment_test_6)
+
+
+# Creating score variables for each of the 4- and 6-item scales
+
+### 4-item scales
+
+# assuredness 
+
+
+
+factor1a_4 <- factor1a_4 %>%
+  mutate(factor1a_4_score = mean(being_free_of_doubt:being_overwhelmed_r))
+
+
+# factor1a_4 <- factor1a_4 %>%
+#   mutate(factor1a_4_score = rowMeans(., na.rm = TRUE))
+
+# factor1a_4 <- factor1a_4 %>%
+#   rowwise() %>%
+#   mutate(factor1a_4_score = mean(c_across(everything())))
+
+# factor1a_4 <- factor1a_4 %>%
+#   rowwise() %>%
+#   mutate(factor1a_4_score = mean(select(., being_free_of_doubt:being_overwhelmed_r)))
+
+
+```
 
