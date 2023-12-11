@@ -838,23 +838,13 @@ write_xlsx(sixitemscales_cormatrix_df, "sixitemscales_cormatrix.xlsx")
 ### 4-item scales
 
 # assuredness 
-
-
-
 factor1a_4 <- factor1a_4 %>%
   mutate(factor1a_4_score = mean(being_free_of_doubt:being_overwhelmed_r))
 
+# decisiveness 
+factor1a_4 <- factor1a_4 %>%
+  mutate(factor1a_4_score = mean(being_free_of_doubt:being_overwhelmed_r))
 
-# factor1a_4 <- factor1a_4 %>%
-#   mutate(factor1a_4_score = rowMeans(., na.rm = TRUE))
-
-# factor1a_4 <- factor1a_4 %>%
-#   rowwise() %>%
-#   mutate(factor1a_4_score = mean(c_across(everything())))
-
-# factor1a_4 <- factor1a_4 %>%
-#   rowwise() %>%
-#   mutate(factor1a_4_score = mean(select(., being_free_of_doubt:being_overwhelmed_r)))
 
 
 ```
